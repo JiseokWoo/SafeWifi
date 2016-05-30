@@ -18,7 +18,7 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/lv_wifilist"
+        android:id="@+id/lv_wifiList"
         android:layout_gravity="center_horizontal" />
 
     <LinearLayout
