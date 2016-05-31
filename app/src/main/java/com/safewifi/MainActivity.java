@@ -25,20 +25,21 @@ public class MainActivity extends AppCompatActivity {
         // 리스트뷰를 위한 adapter 생성
         adapter = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item);
 
-        // layout의 리스트뷰를 불러와 adapter 매핑
+        // 레이아웃의 리스트뷰를 불러와 adapter 매핑
         lv_wifiList = (ListView) findViewById(R.id.lv_wifiList);
         lv_wifiList.setAdapter(adapter);
 
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        // wifi 비활성일 경우 활성화
+        // 와이파이 비활성일 경우 활성화
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
-        //while (!wifiManager.isWifiEnabled()) {}
+        while (!wifiManager.isWifiEnabled()) {}
 
-        // wifi list scan
+        // 와이파이 리스트 스캔
+        // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
         if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
             scanResultList = wifiManager.getScanResults();
 
@@ -47,7 +48,11 @@ public class MainActivity extends AppCompatActivity {
                 for (ScanResult wifi : scanResultList) {
                     adapter.add(wifi.SSID);
                 }
+            } else {
+                adapter.add("사용 가능한 Wifi가 없습니다.");
             }
+        } else {
+            adapter.add("Wifi가 정상적으로 작동하지 않습니다.");
         }
 
         // 데이터 업데이트
