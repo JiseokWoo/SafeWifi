@@ -1,10 +1,14 @@
 package com.safewifi;
 
+import android.net.DhcpInfo;
+import android.text.format.Formatter;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Created by chup on 2016-06-06.
+ * Created by JiseokWoo
+ * AP 정보를 관리하기 위한 클래스
  */
 public class APInfo {
     private String mac;
@@ -20,26 +24,48 @@ public class APInfo {
     private String info;
     private final static String keyInfo = "info";
 
+    /**
+     * 기본 생성자
+     */
+    public APInfo() {}
+
+    /**
+     * MAC 주소와 SSID 값만 설정하는 생성자
+     * @param mac
+     * @param ssid
+     */
+    public APInfo(String mac, String ssid) {
+        setMAC(mac);
+        setSSID(ssid);
+    }
+
+    /**
+     * JSON 스트링을 받아 객체 생성하는 생성자
+     * @param json
+     * @throws JSONException
+     */
     public APInfo(String json) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
 
-        if (jsonObject.getString(keyMAC) != null) {
-            setMac(jsonObject.getString(keyMAC));
+        if (jsonObject.getString(keyMAC) != null || !jsonObject.getString(keyInfo).equals("null")) setMAC(jsonObject.getString(keyMAC));
+        if (jsonObject.getString(keySSID) != null || !jsonObject.getString(keyInfo).equals("null")) setSSID(jsonObject.getString(keySSID));
+        if (jsonObject.getString(keyInfo) != null || !jsonObject.getString(keyInfo).equals("null")) setInfo(jsonObject.getString(keyInfo));
+    }
+
+    /**
+     * DHCP Info에서 pubIP, DNS1, DNS2 읽어와 객체에 저장
+     * @param dhcpInfo
+     */
+    public void setDHCP(DhcpInfo dhcpInfo) {
+
+        if (dhcpInfo.ipAddress != 0) {
+            setPubIP(Formatter.formatIpAddress(dhcpInfo.ipAddress));
         }
-        if (jsonObject.getString(keySSID) != null) {
-            setSSID(jsonObject.getString(keySSID));
+        if (dhcpInfo.dns1 != 0) {
+            setDnsIP1(Formatter.formatIpAddress(dhcpInfo.dns1));
         }
-        if (jsonObject.getString(keyPubIP) != null) {
-            setPubIP(jsonObject.getString(keyPubIP));
-        }
-        if (jsonObject.getString(keyDnsIP1) != null) {
-            setDnsIP1(jsonObject.getString(keyDnsIP1));
-        }
-        if (jsonObject.getString(keyDnsIP2) != null) {
-            setDnsIP2(jsonObject.getString(keyDnsIP2));
-        }
-        if (jsonObject.getString(keyInfo) != null) {
-            setInfo(jsonObject.getString(keyInfo));
+        if (dhcpInfo.dns2 != 0) {
+            setDnsIP2(Formatter.formatIpAddress(dhcpInfo.dns2));
         }
     }
 
@@ -51,11 +77,11 @@ public class APInfo {
         this.ssid = SSID;
     }
 
-    public String getMac() {
+    public String getMAC() {
         return mac;
     }
 
-    public void setMac(String mac) {
+    public void setMAC(String mac) {
         this.mac = mac;
     }
 
@@ -91,19 +117,24 @@ public class APInfo {
         this.info = info;
     }
 
-    public String toString(int op) {
+    /**
+     * post pram 형식의 스트링 반환
+     * @param op GET: 서버 데이터 조회용 , PUT: 서버 데이터 업로드 용
+     * @return post param
+     */
+    public String toString(String op) {
         String result = "";
 
-        if (getMac() != null) { result += keyMAC + "=" + getMac() + "&"; }
-        if (getSSID() != null) { result += keySSID + "=" + getSSID() + "&"; }
-        if (op == 1) { return result; }
-        if (getPubIP() != null) { result += keyPubIP + "=" + getPubIP() + "&"; }
-        if (getDnsIP1() != null) { result += keyDnsIP1 + "=" + getDnsIP1() + "&"; }
-        if (getDnsIP2() != null) { result += keyDnsIP2 + "=" + getDnsIP2(); }
+        if (getMAC() != null) result += keyMAC + "=" + getMAC() + "&";
+        if (getSSID() != null) result += keySSID + "=" + getSSID() + "&";
 
-        if (result.endsWith("&")) {
-            result = result.substring(0, result.length() - 1);
-        }
+        if (op.equals(Command.GET)) return result;
+
+        if (getPubIP() != null) result += keyPubIP + "=" + getPubIP() + "&";
+        if (getDnsIP1() != null) result += keyDnsIP1 + "=" + getDnsIP1() + "&";
+        if (getDnsIP2() != null) result += keyDnsIP2 + "=" + getDnsIP2();
+
+        if (result.endsWith("&")) result = result.substring(0, result.length() - 1);
 
         return result;
     }
