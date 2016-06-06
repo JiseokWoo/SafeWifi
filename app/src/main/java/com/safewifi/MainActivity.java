@@ -8,9 +8,22 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String get_url = "http://172.30.1.41/wifiscan.php";
+    private static final String put_url = "http://172.30.1.41/wificonn.php";
 
     private ListView lv_wifiList;
     private ArrayAdapter<String> adapter;
@@ -29,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
         lv_wifiList = (ListView) findViewById(R.id.lv_wifiList);
         lv_wifiList.setAdapter(adapter);
 
+        /*
+
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
@@ -36,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
-        while (!wifiManager.isWifiEnabled()) {}
 
         // 와이파이 리스트 스캔
         // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
@@ -55,7 +69,60 @@ public class MainActivity extends AppCompatActivity {
             adapter.add("Wifi가 정상적으로 작동하지 않습니다.");
         }
 
+        */
+
+
+        // thread로 db 서버와 통신
+        new Thread() {
+            public void run() {
+                getAPInfo();
+            }
+        }.start();
+
+
         // 데이터 업데이트
         adapter.notifyDataSetChanged();
+    }
+
+    private String getAPInfo() {
+        String response = "";
+
+        try {
+            // wifiscan connection 생성
+            URL url = new URL(get_url);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            // connection post 설정
+            conn.setUseCaches(false);
+            conn.setRequestMethod("POST");
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+            // post로 전송할 데이터 생성
+            StringBuffer sb = new StringBuffer();
+            sb.append("mac").append("=").append("aa:bb:cc:dd:ee:ff:gg").append("&");
+            sb.append("ssid").append("=").append("testAP");
+
+            // post로 데이터 전송
+            PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream()));
+            pw.write(sb.toString());
+            pw.flush();
+
+            // 서버로부터 response 수신
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder buff = new StringBuilder();
+                String line = bf.readLine();
+            }
+
+            conn.disconnect();
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return response;
     }
 }
