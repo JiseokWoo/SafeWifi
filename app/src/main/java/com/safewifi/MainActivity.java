@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,12 +31,13 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String get_url = "http://172.30.1.41/wifiscan.php";
-    private static final String put_url = "http://172.30.1.41/wificonn.php";
+    private static final String get_url = "http://172.20.10.8/wifiscan.php";
+    private static final String put_url = "http://172.20.10.8/wificonn.php";
 
     private ListView lv_wifiList;
     private ArrayAdapter<String> adapter;
     private WifiManager wifiManager;
+    private WifiInfo wifiInfo;
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
 
@@ -55,41 +57,33 @@ public class MainActivity extends AppCompatActivity {
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         apInfoList = new ArrayList<>();
 
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        wifiInfo = wifiManager.getConnectionInfo();
 
-        // 현재 AP에 접속중일 경우 데이터 업로드
+        /*// 현재 AP에 접속중일 경우 데이터 업로드
         if (wifiInfo.getBSSID() != null) {
-            DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-
-            APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID());
-            apInfo.setDHCP(dhcpInfo);
-            // TODO: AP 정보 서버로 업로드
-        }
+            new Thread() {
+                public void run() {
+                        checkAP();
+                }
+            }.start();
+        }*/
 
         new Thread() {
             public void run() {
                 try {
-                    APScan();
+                    scanAP();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
         }.start();
-
-        for (APInfo apInfo : apInfoList) {
-            adapter.add(apInfo.getSSID());
-        }
-
-        // 데이터 업데이트
-        adapter.notifyDataSetChanged();
-
     }
 
     /**
      * 주변 AP 정보 스캔 후 apInfoList에 저장
      * @throws JSONException
      */
-    private void APScan() throws JSONException {
+    private String scanAP() throws JSONException {
         // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
         // 와이파이 비활성일 경우 활성화
@@ -109,14 +103,33 @@ public class MainActivity extends AppCompatActivity {
                 for (ScanResult ap : scanResultList) {
                     APInfo apInfo = getAPInfo(ap.BSSID, ap.SSID);
                     apInfoList.add(apInfo);
+                    adapter.add(apInfo.getSSID());
                 }
             } else {
-                // TODO:  ErrorCode 작성
-                adapter.add("사용 가능한 Wifi가 없습니다.");
+                return Command.WIFI_UNAVAILABLE_ERROR;
             }
         } else {
             // TODO:  ErrorCode 작성
-            adapter.add("Wifi가 정상적으로 작동하지 않습니다.");
+            return Command.WIFI_ENABLE_ERROR;
+        }
+
+        adapter.notifyDataSetChanged();
+
+        return Command.SUCCESS;
+    }
+
+    /**
+     * 현재 AP 정보 체크해 서버에 업로드
+     */
+    private void checkAP() {
+        if (wifiManager != null && wifiInfo != null) {
+            DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
+
+            APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID());
+            apInfo.setDHCP(dhcpInfo);
+
+            // 서버에 현재 AP 정보 업로드
+            putAPInfo(apInfo);
         }
     }
 
@@ -142,15 +155,18 @@ public class MainActivity extends AppCompatActivity {
             conn.setDoOutput(true);
 
             // post로 데이터 전송
-            PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream()));
+            PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream(), "UTF-8"), true);
             pw.write(apInfo.toString(Command.GET));
             pw.flush();
 
             // 서버로부터 response 수신
             if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 String response = bf.readLine();
-                apInfo = new APInfo(response);
+
+                if (response != null) {
+                    apInfo = new APInfo(response);
+                }
             }
 
             conn.disconnect();
@@ -185,6 +201,15 @@ public class MainActivity extends AppCompatActivity {
             PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream()));
             pw.write(apInfo.toString(Command.PUT));
             pw.flush();
+
+            /*// 서버로부터 response 수신
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String response = bf.readLine();
+                if (response == null) {
+
+                }
+            }*/
 
             conn.disconnect();
 

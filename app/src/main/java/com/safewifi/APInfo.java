@@ -126,11 +126,11 @@ public class APInfo {
         String result = "";
 
         if (getMAC() != null) result += keyMAC + "=" + getMAC() + "&";
-        if (getSSID() != null) result += keySSID + "=" + getSSID() + "&";
+        if (getSSID() != null) result += keySSID + "=" + getSSID();
 
         if (op.equals(Command.GET)) return result;
 
-        if (getPubIP() != null) result += keyPubIP + "=" + getPubIP() + "&";
+        if (getPubIP() != null) result += "&" + keyPubIP + "=" + getPubIP() + "&";
         if (getDnsIP1() != null) result += keyDnsIP1 + "=" + getDnsIP1() + "&";
         if (getDnsIP2() != null) result += keyDnsIP2 + "=" + getDnsIP2();
 
