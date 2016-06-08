@@ -6,6 +6,7 @@ import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
@@ -21,7 +22,6 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,27 +63,68 @@ public class MainActivity extends AppCompatActivity {
         if (wifiInfo.getBSSID() != null) {
             new Thread() {
                 public void run() {
-                        checkAP();
+                    checkAP();
                 }
             }.start();
         }*/
 
-        new Thread() {
-            public void run() {
-                try {
-                    scanAP();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+        new ScanAP().execute();
+
+    }
+
+    private class ScanAP extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
+
+            // 와이파이 비활성일 경우 활성화
+            if (!wifiManager.isWifiEnabled()) {
+                wifiManager.setWifiEnabled(true);
             }
-        }.start();
+
+            apInfoList.clear();
+            adapter.clear();
+
+            // 와이파이 리스트 스캔
+            if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
+                scanResultList = wifiManager.getScanResults();
+
+                // 스캔 결과 adapter에 추가
+                if (scanResultList != null && !scanResultList.isEmpty()) {
+                    for (ScanResult ap : scanResultList) {
+                        APInfo apInfo = null;
+                        try {
+                            apInfo = getAPInfo(ap.BSSID, ap.SSID);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        apInfoList.add(apInfo);
+                        adapter.add(apInfo.getSSID());
+                    }
+                } else {
+                    return Command.WIFI_UNAVAILABLE_ERROR;
+                }
+            } else {
+                // TODO:  ErrorCode 작성
+                return Command.WIFI_ENABLE_ERROR;
+            }
+
+            return Command.SUCCESS;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            adapter.notifyDataSetChanged();
+            super.onPostExecute(result);
+        }
     }
 
     /**
      * 주변 AP 정보 스캔 후 apInfoList에 저장
      * @throws JSONException
      */
-    private String scanAP() throws JSONException {
+    /*private String scanAP() throws JSONException {
         // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
         // 와이파이 비활성일 경우 활성화
@@ -113,10 +154,8 @@ public class MainActivity extends AppCompatActivity {
             return Command.WIFI_ENABLE_ERROR;
         }
 
-        adapter.notifyDataSetChanged();
-
         return Command.SUCCESS;
-    }
+    }*/
 
     /**
      * 현재 AP 정보 체크해 서버에 업로드
