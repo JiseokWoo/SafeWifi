@@ -5,7 +5,7 @@ package com.safewifi;
  * 공통 Command
  */
 public class Command {
-    // basic
+    // result
     public final static String SUCCESS = "SUCCESS";
     public final static String FAIL = "FAIL";
 

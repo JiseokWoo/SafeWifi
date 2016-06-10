@@ -34,8 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String get_url = "http://172.20.10.8/wifiscan.php";
     private static final String put_url = "http://172.20.10.8/wificonn.php";
 
-    private ListView lv_wifiList;
-    private ArrayAdapter<String> adapter;
+
     private WifiManager wifiManager;
     private WifiInfo wifiInfo;
     private List<ScanResult> scanResultList;
@@ -46,12 +45,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 리스트뷰를 위한 adapter 생성
-        adapter = new ArrayAdapter<>(this, R.layout.support_simple_spinner_dropdown_item);
 
-        // 레이아웃의 리스트뷰를 불러와 adapter 매핑
-        lv_wifiList = (ListView) findViewById(R.id.lv_wifiList);
-        lv_wifiList.setAdapter(adapter);
 
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -59,15 +53,34 @@ public class MainActivity extends AppCompatActivity {
 
         wifiInfo = wifiManager.getConnectionInfo();
 
+        // 현재 AP 연결중일 경우
         if (wifiInfo.getBSSID() != null) {
-            new CheckAP().execute();
+            new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
         }
 
-        new ScanAP().execute();
+        new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
+
+
+
 
     }
 
+    /**
+     * 주변 AP를 검색해 MAC 기반으로 서버에 정보 조회
+     */
     private class ScanAP extends AsyncTask<String, Integer, String> {
+        private ListView lv_wifiList;
+        private ArrayAdapter<String> adapter;
+
+        @Override
+        protected  void onPreExecute() {
+            // 리스트뷰를 위한 adapter 생성
+            adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item);
+
+            // 레이아웃의 리스트뷰를 불러와 adapter 매핑
+            lv_wifiList = (ListView) findViewById(R.id.lv_wifiList);
+            lv_wifiList.setAdapter(adapter);
+        }
 
         @Override
         protected String doInBackground(String... params) {
@@ -79,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             apInfoList.clear();
-            adapter.clear();
 
             // 와이파이 리스트 스캔
             if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
@@ -97,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
 
                         if (apInfo != null){
                             apInfoList.add(apInfo);
-                            adapter.add(apInfo.getSSID());
                         } else {
                             // TODO: 에러 처리
                         }
@@ -115,11 +126,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            //adapter.notifyDataSetChanged();
+            if (result.equals(Command.SUCCESS)) {
+                for (APInfo apInfo : apInfoList) {
+                    adapter.add(apInfo.getSSID());
+                }
+
+                adapter.notifyDataSetChanged();
+            }
             super.onPostExecute(result);
         }
     }
 
+    /**
+     * 접속중인 AP 정보를 체크해 서버로 전송
+     */
     private class CheckAP extends AsyncTask<String, Integer, String> {
 
         @Override
@@ -137,6 +157,11 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return Command.FAIL;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
         }
 
     }
