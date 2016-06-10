@@ -59,14 +59,9 @@ public class MainActivity extends AppCompatActivity {
 
         wifiInfo = wifiManager.getConnectionInfo();
 
-        /*// 현재 AP에 접속중일 경우 데이터 업로드
         if (wifiInfo.getBSSID() != null) {
-            new Thread() {
-                public void run() {
-                    checkAP();
-                }
-            }.start();
-        }*/
+            new CheckAP().execute();
+        }
 
         new ScanAP().execute();
 
@@ -99,8 +94,13 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        apInfoList.add(apInfo);
-                        adapter.add(apInfo.getSSID());
+
+                        if (apInfo != null){
+                            apInfoList.add(apInfo);
+                            adapter.add(apInfo.getSSID());
+                        } else {
+                            // TODO: 에러 처리
+                        }
                     }
                 } else {
                     return Command.WIFI_UNAVAILABLE_ERROR;
@@ -115,61 +115,30 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            adapter.notifyDataSetChanged();
+            //adapter.notifyDataSetChanged();
             super.onPostExecute(result);
         }
     }
 
-    /**
-     * 주변 AP 정보 스캔 후 apInfoList에 저장
-     * @throws JSONException
-     */
-    /*private String scanAP() throws JSONException {
-        // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
+    private class CheckAP extends AsyncTask<String, Integer, String> {
 
-        // 와이파이 비활성일 경우 활성화
-        if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-        }
+        @Override
+        protected String doInBackground(String... params) {
+            if (wifiManager != null && wifiInfo != null) {
+                DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
 
-        apInfoList.clear();
-        adapter.clear();
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID());
+                apInfo.setDHCP(dhcpInfo);
 
-        // 와이파이 리스트 스캔
-        if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
-            scanResultList = wifiManager.getScanResults();
+                // 서버에 현재 AP 정보 업로드
+                putAPInfo(apInfo);
 
-            // 스캔 결과 adapter에 추가
-            if (scanResultList != null && !scanResultList.isEmpty()) {
-                for (ScanResult ap : scanResultList) {
-                    APInfo apInfo = getAPInfo(ap.BSSID, ap.SSID);
-                    apInfoList.add(apInfo);
-                    adapter.add(apInfo.getSSID());
-                }
-            } else {
-                return Command.WIFI_UNAVAILABLE_ERROR;
+                return Command.SUCCESS;
             }
-        } else {
-            // TODO:  ErrorCode 작성
-            return Command.WIFI_ENABLE_ERROR;
+
+            return Command.FAIL;
         }
 
-        return Command.SUCCESS;
-    }*/
-
-    /**
-     * 현재 AP 정보 체크해 서버에 업로드
-     */
-    private void checkAP() {
-        if (wifiManager != null && wifiInfo != null) {
-            DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-
-            APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID());
-            apInfo.setDHCP(dhcpInfo);
-
-            // 서버에 현재 AP 정보 업로드
-            putAPInfo(apInfo);
-        }
     }
 
     /**
@@ -203,7 +172,14 @@ public class MainActivity extends AppCompatActivity {
                 BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 String response = bf.readLine();
 
-                if (response != null) {
+                // TODO: 에러 처리 로직 개선 필요
+                if (response.equals(Command.NO_MAC_ERROR)) {
+                    return null;
+                } else if (response.equals(Command.DB_INSERT_ERROR) || response.equals(Command.DB_SELECT_ERROR)) {
+                    return null;
+                } else if (response.equals(Command.EMPTY)) {
+                    return null;
+                } else {
                     apInfo = new APInfo(response);
                 }
             }
@@ -223,7 +199,8 @@ public class MainActivity extends AppCompatActivity {
      * 서버로 AP 정보 업로드
      * @param apInfo
      */
-    private void putAPInfo(APInfo apInfo) {
+    private String putAPInfo(APInfo apInfo) {
+        String response = Command.EMPTY;
 
         try {
             // wifiscan connection 생성
@@ -237,18 +214,15 @@ public class MainActivity extends AppCompatActivity {
             conn.setDoOutput(true);
 
             // post로 데이터 전송
-            PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream()));
+            PrintWriter pw = new PrintWriter(new OutputStreamWriter(conn.getOutputStream(), "UTF-8"), true);
             pw.write(apInfo.toString(Command.PUT));
             pw.flush();
 
-            /*// 서버로부터 response 수신
+            // 서버로부터 response 수신
             if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String response = bf.readLine();
-                if (response == null) {
-
-                }
-            }*/
+                BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+                response = bf.readLine();
+            }
 
             conn.disconnect();
 
@@ -257,5 +231,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return response;
     }
 }

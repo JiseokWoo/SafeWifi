@@ -124,17 +124,11 @@ public class APInfo {
      */
     public String toString(String op) {
         String result = "";
-
-        if (getMAC() != null) result += keyMAC + "=" + getMAC() + "&";
-        if (getSSID() != null) result += keySSID + "=" + getSSID();
-
-        if (op.equals(Command.GET)) return result;
-
-        if (getPubIP() != null) result += "&" + keyPubIP + "=" + getPubIP() + "&";
-        if (getDnsIP1() != null) result += keyDnsIP1 + "=" + getDnsIP1() + "&";
-        if (getDnsIP2() != null) result += keyDnsIP2 + "=" + getDnsIP2();
-
-        if (result.endsWith("&")) result = result.substring(0, result.length() - 1);
+        if (op.equals(Command.GET))
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID();
+        else if (op.equals(Command.PUT)) {
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2();
+        }
 
         return result;
     }
