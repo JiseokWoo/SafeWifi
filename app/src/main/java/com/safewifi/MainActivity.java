@@ -29,7 +29,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -73,8 +72,6 @@ public class MainActivity extends ListActivity {
         new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
 
 
-
-
     }
 
     /**
@@ -101,8 +98,12 @@ public class MainActivity extends ListActivity {
 
             if (apInfo != null) {
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+                TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
+                if (tv_ssid != null && apInfo.getSSID() != null) {
                     tv_ssid.setText(apInfo.getSSID());
                 }
+                if (tv_signal != null && apInfo.getSignalLevel() != null) {
+                    tv_signal.setText(apInfo.getSignalLevel().toString());
                 }
             }
 
@@ -167,7 +168,6 @@ public class MainActivity extends ListActivity {
                 // TODO:  ErrorCode 작성
                 return Command.WIFI_ENABLE_ERROR;
             }
-
             return Command.SUCCESS;
         }
 
@@ -197,15 +197,14 @@ public class MainActivity extends ListActivity {
 
                 return Command.SUCCESS;
             }
-
             return Command.FAIL;
         }
 
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-    }
 
+    }
     }
 
     /**
