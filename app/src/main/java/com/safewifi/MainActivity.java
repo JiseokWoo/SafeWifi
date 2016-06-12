@@ -29,6 +29,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -74,6 +77,9 @@ public class MainActivity extends ListActivity {
 
     }
 
+    /**
+     * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
+     */
     private class APInfoAdapter extends ArrayAdapter<APInfo> {
         private List<APInfo> apInfoList;
 
@@ -94,13 +100,24 @@ public class MainActivity extends ListActivity {
             APInfo apInfo = apInfoList.get(position);
 
             if (apInfo != null) {
-                TextView textView = (TextView) view.findViewById(R.id.tv_ssid);
-                if (textView != null) {
-                    textView.setText(apInfo.getSSID());
+                TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+                    tv_ssid.setText(apInfo.getSSID());
+                }
                 }
             }
 
             return view;
+        }
+    }
+
+    /**
+     * APInfo의 SignalLevel을 기준으로 정렬하기 위한 Comparator
+     */
+    static class LevelAscCompare implements Comparator<APInfo> {
+
+        @Override
+        public int compare(APInfo ap1, APInfo ap2) {
+            return ap2.getSignalLevel().compareTo(ap1.getSignalLevel());
         }
     }
 
@@ -132,7 +149,7 @@ public class MainActivity extends ListActivity {
                     for (ScanResult ap : scanResultList) {
                         APInfo apInfo = null;
                         try {
-                            apInfo = getAPInfo(ap.BSSID, ap.SSID);
+                            apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -156,13 +173,7 @@ public class MainActivity extends ListActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            /*if (result.equals(Command.SUCCESS)) {
-                for (APInfo apInfo : apInfoList) {
-                    apInfoAdapter.add(apInfo);
-                }
-
-                apInfoAdapter.notifyDataSetChanged();
-            }*/
+            Collections.sort(apInfoList, new LevelAscCompare());
             apInfoAdapter.notifyDataSetChanged();
             super.onPostExecute(result);
         }
@@ -178,7 +189,7 @@ public class MainActivity extends ListActivity {
             if (wifiManager != null && wifiInfo != null) {
                 DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
 
-                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID());
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi());
                 apInfo.setDHCP(dhcpInfo);
 
                 // 서버에 현재 AP 정보 업로드
@@ -193,7 +204,7 @@ public class MainActivity extends ListActivity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-        }
+    }
 
     }
 
@@ -204,8 +215,8 @@ public class MainActivity extends ListActivity {
      * @return
      * @throws JSONException
      */
-    private APInfo getAPInfo(String mac, String ssid) throws JSONException {
-        APInfo apInfo = new APInfo(mac, ssid);
+    private APInfo getAPInfo(String mac, String ssid, Integer signal) throws JSONException {
+        APInfo apInfo = new APInfo(mac, ssid, signal);
 
         try {
             // wifiscan connection 생성
@@ -236,7 +247,7 @@ public class MainActivity extends ListActivity {
                 } else if (response.equals(Command.EMPTY)) {
                     return null;
                 } else {
-                    apInfo = new APInfo(response);
+                    apInfo.setDBInfo(response);
                 }
             }
 

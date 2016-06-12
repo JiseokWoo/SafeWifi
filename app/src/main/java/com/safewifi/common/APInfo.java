@@ -6,6 +6,7 @@ import android.text.format.Formatter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 /**
  * Created by JiseokWoo
  * AP 정보를 관리하기 위한 클래스
@@ -21,7 +22,7 @@ public class APInfo {
     private final static String keyDnsIP1 = "dnsIP1";
     private String dnsIP2;
     private final static String keyDnsIP2 = "dnsIP2";
-    private int signalLevel;
+    private Integer signalLevel;
     private final static String keySignalLevel = "signalLevel";
     private String securityLevel;
     private final static String keySecurityLevel = "securityLevel";
@@ -38,17 +39,18 @@ public class APInfo {
      * @param mac
      * @param ssid
      */
-    public APInfo(String mac, String ssid) {
+    public APInfo(String mac, String ssid, Integer signalLevel) {
         setMAC(mac);
         setSSID(ssid);
+        setSignalLevel(signalLevel);
     }
 
     /**
-     * JSON 스트링을 받아 객체 생성하는 생성자
+     * DB에서 가져온 JSON 스트링을 객체에 세팅
      * @param json
      * @throws JSONException
      */
-    public APInfo(String json) throws JSONException {
+    public void setDBInfo(String json) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
 
         if (jsonObject.getString(keyMAC) != null || !jsonObject.getString(keyInfo).equals("null")) setMAC(jsonObject.getString(keyMAC));
@@ -113,7 +115,7 @@ public class APInfo {
         this.dnsIP2 = dnsIP2;
     }
 
-    public int getSignalLevel() {
+    public Integer getSignalLevel() {
         return signalLevel;
     }
 
@@ -152,4 +154,5 @@ public class APInfo {
 
         return result;
     }
+
 }
