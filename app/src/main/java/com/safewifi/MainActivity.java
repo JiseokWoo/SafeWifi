@@ -99,11 +99,16 @@ public class MainActivity extends ListActivity {
             if (apInfo != null) {
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
                 TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
+                TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
+
                 if (tv_ssid != null && apInfo.getSSID() != null) {
                     tv_ssid.setText(apInfo.getSSID());
                 }
                 if (tv_signal != null && apInfo.getSignalLevel() != null) {
                     tv_signal.setText(apInfo.getSignalLevel().toString());
+                }
+                if (tv_security != null && apInfo.getSecurity_level() != null) {
+                    tv_security.setText(apInfo.getSecurity_level());
                 }
             }
 

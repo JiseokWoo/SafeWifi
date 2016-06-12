@@ -24,8 +24,8 @@ public class APInfo {
     private final static String keyDnsIP2 = "dnsIP2";
     private Integer signalLevel;
     private final static String keySignalLevel = "signalLevel";
-    private String securityLevel;
-    private final static String keySecurityLevel = "securityLevel";
+    private String security_level;
+    private final static String keySecurityLevel = "security_level";
     private String info;
     private final static String keyInfo = "info";
 
@@ -55,7 +55,7 @@ public class APInfo {
 
         if (jsonObject.getString(keyMAC) != null || !jsonObject.getString(keyInfo).equals("null")) setMAC(jsonObject.getString(keyMAC));
         if (jsonObject.getString(keySSID) != null || !jsonObject.getString(keyInfo).equals("null")) setSSID(jsonObject.getString(keySSID));
-        if (jsonObject.getString(keyInfo) != null || !jsonObject.getString(keyInfo).equals("null")) setInfo(jsonObject.getString(keyInfo));
+        if (jsonObject.getString(keySecurityLevel) != null || !jsonObject.getString(keySecurityLevel).equals("null")) setSecurity_level(jsonObject.getString(keySecurityLevel));
     }
 
     /**
@@ -123,12 +123,12 @@ public class APInfo {
         this.signalLevel = signalLevel;
     }
 
-    public String getSecurityLevel() {
-        return securityLevel;
+    public String getSecurity_level() {
+        return security_level;
     }
 
-    public void setSecurityLevel(String securityLevel) {
-        this.securityLevel = securityLevel;
+    public void setSecurity_level(String security_level) {
+        this.security_level = security_level;
     }
 
     public String getInfo() {
