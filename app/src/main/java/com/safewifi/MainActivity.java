@@ -1,16 +1,22 @@
 package com.safewifi;
 
 
+import android.app.ListActivity;
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.TextView;
+
+import com.safewifi.common.APInfo;
+import com.safewifi.common.Command;
 
 import org.json.JSONException;
 
@@ -29,12 +35,12 @@ import java.util.List;
  * Created by JiseokWoo
  * MainActivity
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends ListActivity {
 
-    private static final String get_url = "http://172.20.10.8/wifiscan.php";
-    private static final String put_url = "http://172.20.10.8/wificonn.php";
+    private static final String get_url = "http://172.30.1.34/wifiscan.php";
+    private static final String put_url = "http://172.30.1.34/wificonn.php";
 
-
+    private APInfoAdapter apInfoAdapter;
     private WifiManager wifiManager;
     private WifiInfo wifiInfo;
     private List<ScanResult> scanResultList;
@@ -45,12 +51,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // APInfo 객체가 저장될 리스트
+        apInfoList = new ArrayList<>();
 
+        // 리스트뷰를 위한 adapter 생성
+        apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row, apInfoList);
+        setListAdapter(apInfoAdapter);
 
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        apInfoList = new ArrayList<>();
-
         wifiInfo = wifiManager.getConnectionInfo();
 
         // 현재 AP 연결중일 경우
@@ -65,21 +74,44 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private class APInfoAdapter extends ArrayAdapter<APInfo> {
+        private List<APInfo> apInfoList;
+
+        public APInfoAdapter(Context context, int textViewResourceId, List<APInfo> apInfoList) {
+            super(context, textViewResourceId, apInfoList);
+            this.apInfoList = apInfoList;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = convertView;
+
+            if (view == null) {
+                LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                view = layoutInflater.inflate(R.layout.row, null);
+            }
+
+            APInfo apInfo = apInfoList.get(position);
+
+            if (apInfo != null) {
+                TextView textView = (TextView) view.findViewById(R.id.tv_ssid);
+                if (textView != null) {
+                    textView.setText(apInfo.getSSID());
+                }
+            }
+
+            return view;
+        }
+    }
+
     /**
      * 주변 AP를 검색해 MAC 기반으로 서버에 정보 조회
      */
     private class ScanAP extends AsyncTask<String, Integer, String> {
-        private ListView lv_wifiList;
-        private ArrayAdapter<String> adapter;
 
         @Override
         protected  void onPreExecute() {
-            // 리스트뷰를 위한 adapter 생성
-            adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item);
-
-            // 레이아웃의 리스트뷰를 불러와 adapter 매핑
-            lv_wifiList = (ListView) findViewById(R.id.lv_wifiList);
-            lv_wifiList.setAdapter(adapter);
+            apInfoAdapter.clear();
         }
 
         @Override
@@ -90,8 +122,6 @@ public class MainActivity extends AppCompatActivity {
             if (!wifiManager.isWifiEnabled()) {
                 wifiManager.setWifiEnabled(true);
             }
-
-            apInfoList.clear();
 
             // 와이파이 리스트 스캔
             if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
@@ -126,13 +156,14 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            if (result.equals(Command.SUCCESS)) {
+            /*if (result.equals(Command.SUCCESS)) {
                 for (APInfo apInfo : apInfoList) {
-                    adapter.add(apInfo.getSSID());
+                    apInfoAdapter.add(apInfo);
                 }
 
-                adapter.notifyDataSetChanged();
-            }
+                apInfoAdapter.notifyDataSetChanged();
+            }*/
+            apInfoAdapter.notifyDataSetChanged();
             super.onPostExecute(result);
         }
     }

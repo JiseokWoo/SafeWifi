@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.safewifi.common;
 
 /**
  * Created by JiseokWoo

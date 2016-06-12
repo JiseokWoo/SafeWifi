@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.safewifi.common;
 
 import android.net.DhcpInfo;
 import android.text.format.Formatter;
@@ -21,6 +21,10 @@ public class APInfo {
     private final static String keyDnsIP1 = "dnsIP1";
     private String dnsIP2;
     private final static String keyDnsIP2 = "dnsIP2";
+    private int signalLevel;
+    private final static String keySignalLevel = "signalLevel";
+    private String securityLevel;
+    private final static String keySecurityLevel = "securityLevel";
     private String info;
     private final static String keyInfo = "info";
 
@@ -107,6 +111,22 @@ public class APInfo {
 
     public void setDnsIP2(String dnsIP2) {
         this.dnsIP2 = dnsIP2;
+    }
+
+    public int getSignalLevel() {
+        return signalLevel;
+    }
+
+    public void setSignalLevel(int signalLevel) {
+        this.signalLevel = signalLevel;
+    }
+
+    public String getSecurityLevel() {
+        return securityLevel;
+    }
+
+    public void setSecurityLevel(String securityLevel) {
+        this.securityLevel = securityLevel;
     }
 
     public String getInfo() {

@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.safewifi.common;
 
 import org.json.JSONException;
 import org.json.JSONObject;
