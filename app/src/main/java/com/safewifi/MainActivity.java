@@ -39,8 +39,8 @@ import java.util.List;
  */
 public class MainActivity extends ListActivity {
 
-    private static final String get_url = "http://172.30.1.34/wifiscan.php";
-    private static final String put_url = "http://172.30.1.34/wificonn.php";
+    private static final String get_url = "http://172.20.10.8/wifiscan.php";
+    private static final String put_url = "http://172.20.10.8/wificonn.php";
 
     private APInfoAdapter apInfoAdapter;
     private WifiManager wifiManager;
@@ -52,6 +52,29 @@ public class MainActivity extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        wifiInfo = wifiManager.getConnectionInfo();
+
+        /*try {
+            BufferedReader br = new BufferedReader(new FileReader("/proc/net/tcp"));
+            String line = "";
+            //br.readLine();
+            while ((line = br.readLine()) != null) {
+                String[] parse = line.split("\\s+");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("IP", parse[0]);
+                jsonObject.put("MAC", parse[3]);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }*/
+
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -105,10 +128,12 @@ public class MainActivity extends ListActivity {
                     tv_ssid.setText(apInfo.getSSID());
                 }
                 if (tv_signal != null && apInfo.getSignalLevel() != null) {
+                    // TODO: 신호 강도 정보 표시
                     tv_signal.setText(apInfo.getSignalLevel().toString());
                 }
-                if (tv_security != null && apInfo.getSecurity_level() != null) {
-                    tv_security.setText(apInfo.getSecurity_level());
+                if (tv_security != null && apInfo.getSecureLevel() != null) {
+                    // TODO: 보안도 정보 표시
+                    tv_security.setText(apInfo.getSecureLevel());
                 }
             }
 
@@ -170,7 +195,6 @@ public class MainActivity extends ListActivity {
                     return Command.WIFI_UNAVAILABLE_ERROR;
                 }
             } else {
-                // TODO:  ErrorCode 작성
                 return Command.WIFI_ENABLE_ERROR;
             }
             return Command.SUCCESS;
