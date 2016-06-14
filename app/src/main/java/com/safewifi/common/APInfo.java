@@ -24,15 +24,21 @@ public class APInfo {
     private final static String keyDnsIP2 = "dnsIP2";
     private Integer signalLevel;
     private final static String keySignalLevel = "signalLevel";
-    private String security_level;
-    private final static String keySecurityLevel = "security_level";
+    private String secure_level;
+    private final static String keySecureLevel = "secure_level";
     private String info;
     private final static String keyInfo = "info";
 
     /**
      * 기본 생성자
      */
-    public APInfo() {}
+    public APInfo() {
+        setSSID("-");
+        setMAC("-");
+        setPubIP("-");
+        setDnsIP1("-");
+        setDnsIP2("-");
+    }
 
     /**
      * MAC 주소와 SSID 값만 설정하는 생성자
@@ -42,6 +48,9 @@ public class APInfo {
     public APInfo(String mac, String ssid, Integer signalLevel) {
         setMAC(mac);
         setSSID(ssid);
+        setPubIP("-");
+        setDnsIP1("-");
+        setDnsIP2("-");
         setSignalLevel(signalLevel);
     }
 
@@ -55,7 +64,12 @@ public class APInfo {
 
         if (jsonObject.getString(keyMAC) != null || !jsonObject.getString(keyInfo).equals("null")) setMAC(jsonObject.getString(keyMAC));
         if (jsonObject.getString(keySSID) != null || !jsonObject.getString(keyInfo).equals("null")) setSSID(jsonObject.getString(keySSID));
-        if (jsonObject.getString(keySecurityLevel) != null || !jsonObject.getString(keySecurityLevel).equals("null")) setSecurity_level(jsonObject.getString(keySecurityLevel));
+        if (jsonObject.getString(keySecureLevel) != null || !jsonObject.getString(keySecureLevel).equals("null")) setSecureLevel(jsonObject.getString(keySecureLevel));
+        if (jsonObject.getString(keyInfo) != null || !jsonObject.getString(keyInfo).equals("null")) setInfo(jsonObject.getString(keyInfo));
+
+        setPubIP("-");
+        setDnsIP1("-");
+        setDnsIP2("-");
     }
 
     /**
@@ -66,12 +80,18 @@ public class APInfo {
 
         if (dhcpInfo.ipAddress != 0) {
             setPubIP(Formatter.formatIpAddress(dhcpInfo.ipAddress));
+        } else {
+            setPubIP("-");
         }
         if (dhcpInfo.dns1 != 0) {
             setDnsIP1(Formatter.formatIpAddress(dhcpInfo.dns1));
+        } else {
+            setDnsIP1("-");
         }
         if (dhcpInfo.dns2 != 0) {
             setDnsIP2(Formatter.formatIpAddress(dhcpInfo.dns2));
+        } else {
+            setDnsIP2("-");
         }
     }
 
@@ -123,12 +143,12 @@ public class APInfo {
         this.signalLevel = signalLevel;
     }
 
-    public String getSecurity_level() {
-        return security_level;
+    public String getSecureLevel() {
+        return secure_level;
     }
 
-    public void setSecurity_level(String security_level) {
-        this.security_level = security_level;
+    public void setSecureLevel(String secure_level) {
+        this.secure_level = secure_level;
     }
 
     public String getInfo() {

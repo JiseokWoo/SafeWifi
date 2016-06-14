@@ -20,4 +20,8 @@ public class Command {
     public final static String DB_INSERT_ERROR = "DB_INSERT_ERROR";
     public final static String DB_SELECT_ERROR = "DB_SELECT_ERROR";
     public final static String EMPTY = "EMPTY";
+
+    // secure_level
+    public final static String SECURE_LEVEL_HIGH = "H";
+    public final static String SECURE_LEVEL_LOW = "L";
 }

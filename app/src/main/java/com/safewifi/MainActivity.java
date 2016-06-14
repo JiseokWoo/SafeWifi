@@ -1,7 +1,7 @@
 package com.safewifi;
 
 
-import android.app.ListActivity;
+import android.app.Activity;
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
@@ -9,16 +9,22 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.safewifi.common.APInfo;
 import com.safewifi.common.Command;
 
 import org.json.JSONException;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,16 +43,17 @@ import java.util.List;
  * Created by JiseokWoo
  * MainActivity
  */
-public class MainActivity extends ListActivity {
+public class MainActivity extends Activity {
 
-    private static final String get_url = "http://172.30.1.34/wifiscan.php";
-    private static final String put_url = "http://172.30.1.34/wificonn.php";
+    private static final String get_url = "http://172.20.10.8/wifiscan.php";
+    private static final String put_url = "http://172.20.10.8/wificonn.php";
 
     private APInfoAdapter apInfoAdapter;
     private WifiManager wifiManager;
     private WifiInfo wifiInfo;
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +65,10 @@ public class MainActivity extends ListActivity {
 
         // 리스트뷰를 위한 adapter 생성
         apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row, apInfoList);
-        setListAdapter(apInfoAdapter);
+
+        listView = (ListView) findViewById(R.id.lv_aplist);
+        listView.setOnItemClickListener(onItemClickListener);
+        listView.setAdapter(apInfoAdapter);
 
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -71,8 +81,44 @@ public class MainActivity extends ListActivity {
 
         new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
 
-
     }
+
+    private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            TextView item_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+            TextView item_mac = (TextView) view.findViewById(R.id.tv_mac);
+
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            final View popupView = inflater.inflate(R.layout.info, null);
+
+            TextView ssid = (TextView) popupView.findViewById(R.id.tv_ssid);
+            TextView info = (TextView) popupView.findViewById(R.id.tv_info);
+            ssid.setText(item_ssid.getText());
+
+            final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+            popup.showAtLocation(view, Gravity.CENTER, 0, 0);
+            popup.setTouchable(true);
+            popup.setFocusable(true);
+            popup.setOutsideTouchable(true);
+            popup.showAsDropDown(popupView);
+
+            Button btn_close = (Button) popupView.findViewById(R.id.btn_close);
+            Button btn_conncet = (Button) popupView.findViewById(R.id.btn_connect);
+            btn_close.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popup.dismiss();
+                }
+            });
+            btn_conncet.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popup.dismiss();
+                }
+            });
+        }
+    };
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -98,18 +144,19 @@ public class MainActivity extends ListActivity {
 
             if (apInfo != null) {
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
                 TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
                 TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
 
-                if (tv_ssid != null && apInfo.getSSID() != null) {
-                    tv_ssid.setText(apInfo.getSSID());
-                }
+                if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
+                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
+                // TODO: 신호 강도 정보 UI 표시
                 if (tv_signal != null && apInfo.getSignalLevel() != null) {
+                    // -90 ~ -20
                     tv_signal.setText(apInfo.getSignalLevel().toString());
                 }
-                if (tv_security != null && apInfo.getSecurity_level() != null) {
-                    tv_security.setText(apInfo.getSecurity_level());
-                }
+                // TODO: 보안도 정보 UI 표시
+                if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
             }
 
             return view;
@@ -135,16 +182,16 @@ public class MainActivity extends ListActivity {
         @Override
         protected  void onPreExecute() {
             apInfoAdapter.clear();
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
             // 와이파이 비활성일 경우 활성화
             if (!wifiManager.isWifiEnabled()) {
                 wifiManager.setWifiEnabled(true);
             }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
             // 와이파이 리스트 스캔
             if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
@@ -170,7 +217,6 @@ public class MainActivity extends ListActivity {
                     return Command.WIFI_UNAVAILABLE_ERROR;
                 }
             } else {
-                // TODO:  ErrorCode 작성
                 return Command.WIFI_ENABLE_ERROR;
             }
             return Command.SUCCESS;
