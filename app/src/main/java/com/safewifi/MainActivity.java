@@ -1,7 +1,7 @@
 package com.safewifi;
 
 
-import android.app.ListActivity;
+import android.app.Activity;
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
@@ -9,16 +9,22 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.safewifi.common.APInfo;
 import com.safewifi.common.Command;
 
 import org.json.JSONException;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,7 +43,7 @@ import java.util.List;
  * Created by JiseokWoo
  * MainActivity
  */
-public class MainActivity extends ListActivity {
+public class MainActivity extends Activity {
 
     private static final String get_url = "http://172.20.10.8/wifiscan.php";
     private static final String put_url = "http://172.20.10.8/wificonn.php";
@@ -47,41 +53,22 @@ public class MainActivity extends ListActivity {
     private WifiInfo wifiInfo;
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        wifiInfo = wifiManager.getConnectionInfo();
-
-        /*try {
-            BufferedReader br = new BufferedReader(new FileReader("/proc/net/tcp"));
-            String line = "";
-            //br.readLine();
-            while ((line = br.readLine()) != null) {
-                String[] parse = line.split("\\s+");
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("IP", parse[0]);
-                jsonObject.put("MAC", parse[3]);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }*/
-
-
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
 
         // 리스트뷰를 위한 adapter 생성
         apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row, apInfoList);
-        setListAdapter(apInfoAdapter);
+
+        listView = (ListView) findViewById(R.id.lv_aplist);
+        listView.setOnItemClickListener(onItemClickListener);
+        listView.setAdapter(apInfoAdapter);
 
         // wifi manager 생성
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -94,8 +81,44 @@ public class MainActivity extends ListActivity {
 
         new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
 
-
     }
+
+    private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            TextView item_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+            TextView item_mac = (TextView) view.findViewById(R.id.tv_mac);
+
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            final View popupView = inflater.inflate(R.layout.info, null);
+
+            TextView ssid = (TextView) popupView.findViewById(R.id.tv_ssid);
+            TextView info = (TextView) popupView.findViewById(R.id.tv_info);
+            ssid.setText(item_ssid.getText());
+
+            final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+            popup.showAtLocation(view, Gravity.CENTER, 0, 0);
+            popup.setTouchable(true);
+            popup.setFocusable(true);
+            popup.setOutsideTouchable(true);
+            popup.showAsDropDown(popupView);
+
+            Button btn_close = (Button) popupView.findViewById(R.id.btn_close);
+            Button btn_conncet = (Button) popupView.findViewById(R.id.btn_connect);
+            btn_close.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popup.dismiss();
+                }
+            });
+            btn_conncet.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    popup.dismiss();
+                }
+            });
+        }
+    };
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -121,20 +144,19 @@ public class MainActivity extends ListActivity {
 
             if (apInfo != null) {
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
                 TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
                 TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
 
-                if (tv_ssid != null && apInfo.getSSID() != null) {
-                    tv_ssid.setText(apInfo.getSSID());
-                }
+                if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
+                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
+                // TODO: 신호 강도 정보 UI 표시
                 if (tv_signal != null && apInfo.getSignalLevel() != null) {
-                    // TODO: 신호 강도 정보 표시
+                    // -90 ~ -20
                     tv_signal.setText(apInfo.getSignalLevel().toString());
                 }
-                if (tv_security != null && apInfo.getSecureLevel() != null) {
-                    // TODO: 보안도 정보 표시
-                    tv_security.setText(apInfo.getSecureLevel());
-                }
+                // TODO: 보안도 정보 UI 표시
+                if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
             }
 
             return view;
@@ -160,16 +182,16 @@ public class MainActivity extends ListActivity {
         @Override
         protected  void onPreExecute() {
             apInfoAdapter.clear();
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
             // 와이파이 비활성일 경우 활성화
             if (!wifiManager.isWifiEnabled()) {
                 wifiManager.setWifiEnabled(true);
             }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            // TODO : 단말의 Wifi가 꺼져있을 경우 Wifi 검색이 되지 않음.
 
             // 와이파이 리스트 스캔
             if (wifiManager.isWifiEnabled() && wifiManager.startScan()) {
