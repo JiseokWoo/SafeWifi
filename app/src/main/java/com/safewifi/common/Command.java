@@ -24,4 +24,8 @@ public class Command {
     // secure_level
     public final static String SECURE_LEVEL_HIGH = "H";
     public final static String SECURE_LEVEL_LOW = "L";
+
+    // info
+    public final static String CLEAN_WIFI = "CLEAN_WIFI";
+    public final static String DNS_SPOOFED = "DNS_SPOOFED";
 }

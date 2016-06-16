@@ -24,7 +24,6 @@ import com.safewifi.common.APInfo;
 import com.safewifi.common.Command;
 
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,6 +53,7 @@ public class MainActivity extends Activity {
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
     private ListView listView;
+    private APInfo curAP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,15 +86,31 @@ public class MainActivity extends Activity {
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            TextView item_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-            TextView item_mac = (TextView) view.findViewById(R.id.tv_mac);
+            curAP = apInfoList.get(position);
 
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             final View popupView = inflater.inflate(R.layout.info, null);
 
             TextView ssid = (TextView) popupView.findViewById(R.id.tv_ssid);
+            TextView mac = (TextView) popupView.findViewById(R.id.tv_mac);
+            TextView security = (TextView) popupView.findViewById(R.id.tv_security);
             TextView info = (TextView) popupView.findViewById(R.id.tv_info);
-            ssid.setText(item_ssid.getText());
+            ssid.setText(curAP.getSSID());
+            mac.setText(curAP.getMAC());
+
+            if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
+                security.setText("보안도가 높습니다.");
+            } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
+                security.setText("보안도가 낮습니다.");
+            } else {
+                security.setText("보안도 확인 불가");
+            }
+
+            if (curAP.getInfo().equals(Command.CLEAN_WIFI)) {
+                info.setText("안전한 Wifi 입니다.");
+            } else if (curAP.getInfo().equals(Command.DNS_SPOOFED)) {
+                info.setText("DNS 정보가 변조되었습니다.");
+            }
 
             final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
             popup.showAtLocation(view, Gravity.CENTER, 0, 0);
@@ -144,12 +160,12 @@ public class MainActivity extends Activity {
 
             if (apInfo != null) {
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
                 TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
                 TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
+                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
+                TextView tv_info = (TextView) view.findViewById(R.id.tv_info);
 
                 if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
-                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
                 // TODO: 신호 강도 정보 UI 표시
                 if (tv_signal != null && apInfo.getSignalLevel() != null) {
                     // -90 ~ -20
@@ -157,6 +173,8 @@ public class MainActivity extends Activity {
                 }
                 // TODO: 보안도 정보 UI 표시
                 if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
+                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
+                if (tv_info != null && apInfo.getInfo() != null) tv_info.setText(apInfo.getInfo());
             }
 
             return view;
@@ -255,7 +273,7 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-    }
+        }
     }
 
     /**
