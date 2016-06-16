@@ -220,7 +220,7 @@ public class MainActivity extends Activity {
                     for (ScanResult ap : scanResultList) {
                         APInfo apInfo = null;
                         try {
-                            apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level);
+                            apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level, ap.capabilities);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -258,7 +258,7 @@ public class MainActivity extends Activity {
             if (wifiManager != null && wifiInfo != null) {
                 DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
 
-                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi());
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), null);
                 apInfo.setDHCP(dhcpInfo);
 
                 // 서버에 현재 AP 정보 업로드
@@ -283,8 +283,8 @@ public class MainActivity extends Activity {
      * @return
      * @throws JSONException
      */
-    private APInfo getAPInfo(String mac, String ssid, Integer signal) throws JSONException {
-        APInfo apInfo = new APInfo(mac, ssid, signal);
+    private APInfo getAPInfo(String mac, String ssid, Integer signal, String encrypt) throws JSONException {
+        APInfo apInfo = new APInfo(mac, ssid, signal, encrypt);
 
         try {
             // wifiscan connection 생성

@@ -22,6 +22,8 @@ public class APInfo {
     private final static String keyDnsIP1 = "dnsIP1";
     private String dnsIP2;
     private final static String keyDnsIP2 = "dnsIP2";
+    private String encrypt;
+    private final static String keyEncrypt = "encrypt";
     private Integer signalLevel;
     private final static String keySignalLevel = "signalLevel";
     private String secure_level;
@@ -45,13 +47,14 @@ public class APInfo {
      * @param mac
      * @param ssid
      */
-    public APInfo(String mac, String ssid, Integer signalLevel) {
+    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt) {
         setMAC(mac);
         setSSID(ssid);
         setPubIP("-");
         setDnsIP1("-");
         setDnsIP2("-");
         setSignalLevel(signalLevel);
+        setEncrypt(encrypt);
     }
 
     /**
@@ -135,6 +138,14 @@ public class APInfo {
         this.dnsIP2 = dnsIP2;
     }
 
+    public String getEncrypt() {
+        return encrypt;
+    }
+
+    public void setEncrypt(String encrypt) {
+        this.encrypt = encrypt;
+    }
+
     public Integer getSignalLevel() {
         return signalLevel;
     }
@@ -167,7 +178,7 @@ public class APInfo {
     public String toString(String op) {
         String result = "";
         if (op.equals(Command.GET))
-            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID();
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&"+ keyEncrypt + "=" + getEncrypt();
         else if (op.equals(Command.PUT)) {
             result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2();
         }
