@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -127,12 +128,67 @@ public class MainActivity extends Activity {
                     popup.dismiss();
                 }
             });
-            btn_conncet.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    popup.dismiss();
-                }
-            });
+            btn_conncet.setOnClickListener(connectListener);
+        }
+    };
+
+    private View.OnClickListener connectListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            final ScanResult ap = scanResultList.get(curAP.getPosition());
+
+            if (ap.capabilities.contains("OPEN")) {
+                WifiConfiguration wifiConfiguration = new WifiConfiguration();
+
+                wifiConfiguration.SSID = ap.SSID;
+                wifiConfiguration.BSSID = ap.BSSID;
+                wifiConfiguration.priority = 1;
+                wifiConfiguration.status = WifiConfiguration.Status.ENABLED;
+                wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                wifiManager.enableNetwork(wifiManager.addNetwork(wifiConfiguration), true);
+                wifiManager.saveConfiguration();
+
+            } else {
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                final View popupView = inflater.inflate(R.layout.connect, null);
+
+                final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+                popup.showAtLocation(v, Gravity.CENTER, 0, 0);
+                popup.setTouchable(true);
+                popup.setFocusable(true);
+                popup.setOutsideTouchable(true);
+                popup.showAsDropDown(popupView);
+
+                Button btn_confirm = (Button) popupView.findViewById(R.id.btn_confirm);
+                Button btn_cancel = (Button) popupView.findViewById(R.id.btn_cancel);
+                btn_confirm.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+                        TextView tv_password = (TextView) v.findViewById(R.id.tv_password);
+                        wifiConfiguration.SSID = ap.SSID;
+                        wifiConfiguration.BSSID = ap.BSSID;
+                        wifiConfiguration.priority = 1;
+                        wifiConfiguration.preSharedKey = tv_password.getText().toString();
+                        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                        wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                        wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+                        wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+                        wifiManager.enableNetwork(wifiManager.addNetwork(wifiConfiguration), true);
+                        wifiManager.saveConfiguration();
+                    }
+                });
+                btn_cancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        popup.dismiss();
+                    }
+                });
+            }
+
+
         }
     };
 
@@ -220,7 +276,7 @@ public class MainActivity extends Activity {
                     for (ScanResult ap : scanResultList) {
                         APInfo apInfo = null;
                         try {
-                            apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level);
+                            apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level, ap.capabilities);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -258,7 +314,7 @@ public class MainActivity extends Activity {
             if (wifiManager != null && wifiInfo != null) {
                 DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
 
-                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi());
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), null, apInfoList.size());
                 apInfo.setDHCP(dhcpInfo);
 
                 // 서버에 현재 AP 정보 업로드
@@ -283,8 +339,8 @@ public class MainActivity extends Activity {
      * @return
      * @throws JSONException
      */
-    private APInfo getAPInfo(String mac, String ssid, Integer signal) throws JSONException {
-        APInfo apInfo = new APInfo(mac, ssid, signal);
+    private APInfo getAPInfo(String mac, String ssid, Integer signal, String encrypt) throws JSONException {
+        APInfo apInfo = new APInfo(mac, ssid, signal, encrypt, apInfoList.size());
 
         try {
             // wifiscan connection 생성
@@ -368,5 +424,15 @@ public class MainActivity extends Activity {
         }
 
         return response;
+    }
+
+    private boolean WifiConnect(String mac, String ssid) {
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = ssid;
+        wifiConfiguration.BSSID = mac;
+        wifiConfiguration.priority = 1;
+
+
+        return true;
     }
 }
