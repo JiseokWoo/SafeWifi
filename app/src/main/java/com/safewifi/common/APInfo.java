@@ -30,6 +30,7 @@ public class APInfo {
     private final static String keySecureLevel = "secure_level";
     private String info;
     private final static String keyInfo = "info";
+    private int position;
 
     /**
      * 기본 생성자
@@ -40,6 +41,7 @@ public class APInfo {
         setPubIP("-");
         setDnsIP1("-");
         setDnsIP2("-");
+        setPosition(0);
     }
 
     /**
@@ -47,7 +49,7 @@ public class APInfo {
      * @param mac
      * @param ssid
      */
-    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt) {
+    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt, int position) {
         setMAC(mac);
         setSSID(ssid);
         setPubIP("-");
@@ -55,6 +57,7 @@ public class APInfo {
         setDnsIP2("-");
         setSignalLevel(signalLevel);
         setEncrypt(encrypt);
+        setPosition(position);
     }
 
     /**
@@ -143,7 +146,24 @@ public class APInfo {
     }
 
     public void setEncrypt(String encrypt) {
-        this.encrypt = encrypt;
+        if (encrypt != null) {
+            if (encrypt.contains("OPEN")) {
+                this.encrypt = "OPEN";
+            } else if (encrypt.contains("WEP")) {
+                this.encrypt = "WEP";
+            } else if (encrypt.contains("WPA")) {
+                if (encrypt.contains("2")){
+                    this.encrypt = "WPA2";
+                } else {
+                    this.encrypt = "WPA";
+                }
+            } else if (encrypt.contains("ESS")) {
+                this.encrypt = "WPA2";
+            } else {
+                this.encrypt = "UNKNOWN";
+            }
+        }
+
     }
 
     public Integer getSignalLevel() {
@@ -186,4 +206,11 @@ public class APInfo {
         return result;
     }
 
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
 }
