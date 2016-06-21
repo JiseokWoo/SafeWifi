@@ -99,18 +99,38 @@ public class MainActivity extends Activity {
             ssid.setText(curAP.getSSID());
             mac.setText(curAP.getMAC());
 
-            if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
-                security.setText("보안도가 높습니다.");
-            } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
-                security.setText("보안도가 낮습니다.");
-            } else {
-                security.setText("보안도 확인 불가");
-            }
+            if (curAP.getSecureLevel() != null) {
+                if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
+                    security.setText("보안도가 높습니다. (" + curAP.getSecureScore() + "점)");
+                } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_MEDIUM)) {
+                    security.setText("보안도가 보통입니다. (" + curAP.getSecureScore() + "점)");
+                } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
+                    security.setText("보안도가 낮습니다. (" + curAP.getSecureScore() + "점)");
+                }
 
-            if (curAP.getInfo().equals(Command.CLEAN_WIFI)) {
-                info.setText("안전한 Wifi 입니다.");
-            } else if (curAP.getInfo().equals(Command.DNS_SPOOFED)) {
-                info.setText("DNS 정보가 변조되었습니다.");
+                String secure_info = "";
+
+                if (curAP.getInfoEncrypt().equals("OPEN")) {
+                    secure_info += "공유기 암호화 설정 안됨\n";
+                } else if (curAP.getInfoEncrypt().equals("WEP") || curAP.getInfoEncrypt().equals("WPA")) {
+                    secure_info += "공유기 암호화 설정 취약\n";
+                }
+
+                if (curAP.getInfoDns() > 0) {
+                    secure_info += "DNS 변조 의심 : (" + curAP.getInfoDns() + ")건 탐지\n";
+                }
+
+                if (curAP.getInfoArp()) {
+                    secure_info += "ARP 테이블 변조 의심\n";
+                }
+
+                if (curAP.getInfoPort()) {
+                    secure_info += "비정상 포트 오픈";
+                }
+
+                info.setText(secure_info);
+            } else {
+                security.setText("보안도를 알 수 없습니다.");
             }
 
             final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
@@ -128,11 +148,11 @@ public class MainActivity extends Activity {
                     popup.dismiss();
                 }
             });
-            btn_conncet.setOnClickListener(connectListener);
+            //btn_conncet.setOnClickListener(connectListener);
         }
     };
 
-    private View.OnClickListener connectListener = new View.OnClickListener() {
+    /*private View.OnClickListener connectListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             final ScanResult ap = scanResultList.get(curAP.getPosition());
@@ -190,7 +210,7 @@ public class MainActivity extends Activity {
 
 
         }
-    };
+    };*/
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -230,7 +250,7 @@ public class MainActivity extends Activity {
                 // TODO: 보안도 정보 UI 표시
                 if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
                 if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
-                if (tv_info != null && apInfo.getInfo() != null) tv_info.setText(apInfo.getInfo());
+                //if (tv_info != null && apInfo.getInfo() != null) tv_info.setText(apInfo.getInfo());
             }
 
             return view;
@@ -310,12 +330,30 @@ public class MainActivity extends Activity {
     private class CheckAP extends AsyncTask<String, Integer, String> {
 
         @Override
+        protected void onPreExecute() {
+            wifiManager.startScan();
+            scanResultList = wifiManager.getScanResults();
+        }
+
+        @Override
         protected String doInBackground(String... params) {
             if (wifiManager != null && wifiInfo != null) {
                 DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
+                String encrypt = null;
 
-                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), null, apInfoList.size());
+                for (ScanResult ap : scanResultList) {
+                    if (ap.BSSID.equals(wifiInfo.getBSSID())) {
+                        encrypt = ap.capabilities;
+                        break;
+                    }
+                }
+
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt, apInfoList.size());
                 apInfo.setDHCP(dhcpInfo);
+
+                // TODO: 테스트용
+                apInfo.setInfoArp(true);
+                apInfo.setInfoPort(true);
 
                 // 서버에 현재 AP 정보 업로드
                 putAPInfo(apInfo);
@@ -328,7 +366,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-
+            scanResultList = null;
         }
     }
 
