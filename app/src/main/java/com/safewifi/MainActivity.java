@@ -2,7 +2,10 @@ package com.safewifi;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
@@ -11,15 +14,13 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -58,7 +59,7 @@ public class MainActivity extends Activity {
     private ListView listView;
     private APInfo curAP;
 
-    private ProgressBar pb_scan;
+    private ProgressDialog pbDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +67,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         startActivity(new Intent(this, Splash.class));
-
-        // 프로그레스바 매핑
-        pb_scan = (ProgressBar) findViewById(R.id.pb_scan);
+        SystemClock.sleep(2000);
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -98,13 +97,13 @@ public class MainActivity extends Activity {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             curAP = apInfoList.get(position);
 
-            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            final View popupView = inflater.inflate(R.layout.info, null);
+            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+            View layout = inflater.inflate(R.layout.info, null);
 
-            TextView ssid = (TextView) popupView.findViewById(R.id.tv_ssid);
-            TextView mac = (TextView) popupView.findViewById(R.id.tv_mac);
-            TextView security = (TextView) popupView.findViewById(R.id.tv_security);
-            TextView info = (TextView) popupView.findViewById(R.id.tv_info);
+            TextView ssid = (TextView) layout.findViewById(R.id.tv_ssid);
+            TextView mac = (TextView) layout.findViewById(R.id.tv_mac);
+            TextView security = (TextView) layout.findViewById(R.id.tv_security);
+            TextView info = (TextView) layout.findViewById(R.id.tv_info);
             ssid.setText(curAP.getSSID());
             mac.setText(curAP.getMAC());
 
@@ -142,84 +141,62 @@ public class MainActivity extends Activity {
                 security.setText("보안도를 알 수 없습니다.");
             }
 
-            final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-            popup.showAtLocation(view, Gravity.CENTER, 0, 0);
-            popup.setTouchable(true);
-            popup.setFocusable(true);
-            popup.setOutsideTouchable(true);
-            popup.showAsDropDown(popupView);
+            AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+            adBuilder.setTitle(curAP.getSSID() + "의 정보");
+            adBuilder.setView(layout);
 
-            Button btn_close = (Button) popupView.findViewById(R.id.btn_close);
-            Button btn_conncet = (Button) popupView.findViewById(R.id.btn_connect);
-            btn_close.setOnClickListener(new View.OnClickListener() {
+            adBuilder.setPositiveButton("연결", connectListener);
+
+            adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+
                 @Override
-                public void onClick(View v) {
-                    popup.dismiss();
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
                 }
             });
-            //btn_conncet.setOnClickListener(connectListener);
+
+            AlertDialog alertDialog = adBuilder.create();
+            alertDialog.show();
+
         }
     };
 
-    /*private View.OnClickListener connectListener = new View.OnClickListener() {
+    private DialogInterface.OnClickListener connectListener = new DialogInterface.OnClickListener() {
         @Override
-        public void onClick(View v) {
+        public void onClick(DialogInterface dialog, int which) {
             final ScanResult ap = scanResultList.get(curAP.getPosition());
 
             if (ap.capabilities.contains("OPEN")) {
-                WifiConfiguration wifiConfiguration = new WifiConfiguration();
-
-                wifiConfiguration.SSID = ap.SSID;
-                wifiConfiguration.BSSID = ap.BSSID;
-                wifiConfiguration.priority = 1;
-                wifiConfiguration.status = WifiConfiguration.Status.ENABLED;
-                wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-                wifiManager.enableNetwork(wifiManager.addNetwork(wifiConfiguration), true);
-                wifiManager.saveConfiguration();
 
             } else {
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                final View popupView = inflater.inflate(R.layout.connect, null);
+                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+                View layout = inflater.inflate(R.layout.connect, null);
 
-                final PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-                popup.showAtLocation(v, Gravity.CENTER, 0, 0);
-                popup.setTouchable(true);
-                popup.setFocusable(true);
-                popup.setOutsideTouchable(true);
-                popup.showAsDropDown(popupView);
+                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+                adBuilder.setTitle(ap.SSID + "에 연결");
+                adBuilder.setView(layout);
 
-                Button btn_confirm = (Button) popupView.findViewById(R.id.btn_confirm);
-                Button btn_cancel = (Button) popupView.findViewById(R.id.btn_cancel);
-                btn_confirm.setOnClickListener(new View.OnClickListener() {
+                adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
 
                     @Override
-                    public void onClick(View v) {
-                        WifiConfiguration wifiConfiguration = new WifiConfiguration();
-                        TextView tv_password = (TextView) v.findViewById(R.id.tv_password);
-                        wifiConfiguration.SSID = ap.SSID;
-                        wifiConfiguration.BSSID = ap.BSSID;
-                        wifiConfiguration.priority = 1;
-                        wifiConfiguration.preSharedKey = tv_password.getText().toString();
-                        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-                        wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-                        wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
-                        wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-                        wifiManager.enableNetwork(wifiManager.addNetwork(wifiConfiguration), true);
-                        wifiManager.saveConfiguration();
+                    public void onClick(DialogInterface dialog, int which) {
+
                     }
                 });
-                btn_cancel.setOnClickListener(new View.OnClickListener() {
+
+                adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+
                     @Override
-                    public void onClick(View v) {
-                        popup.dismiss();
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
                     }
                 });
+
+                AlertDialog alertDialog = adBuilder.create();
+                alertDialog.show();
             }
-
-
         }
-    };*/
+    };
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -284,7 +261,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected  void onPreExecute() {
-            pb_scan.setVisibility(ProgressBar.VISIBLE);
+            pbDialog = ProgressDialog.show(MainActivity.this, "", "스캔중입니다. 잠시만 기다려주세요.");
 
             apInfoAdapter.clear();
 
@@ -330,7 +307,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             Collections.sort(apInfoList, new LevelAscCompare());
-            pb_scan.setVisibility(ProgressBar.GONE);
+            pbDialog.dismiss();
             apInfoAdapter.notifyDataSetChanged();
             super.onPostExecute(result);
         }
