@@ -22,15 +22,20 @@ public class APInfo {
     private final static String keyDnsIP1 = "dnsIP1";
     private String dnsIP2;
     private final static String keyDnsIP2 = "dnsIP2";
-    private String encrypt;
-    private final static String keyEncrypt = "encrypt";
-    private Integer signalLevel;
-    private final static String keySignalLevel = "signalLevel";
     private String secure_level;
     private final static String keySecureLevel = "secure_level";
-    private String info;
-    private final static String keyInfo = "info";
-    private int position;
+    private Integer secure_score;
+    private final static String keySecureScore = "secure_score";
+    private String info_encrypt;
+    private final static String keyInfoEncrypt = "info_encrypt";
+    private Integer info_dns;
+    private final static String keyInfoDns = "info_dns";
+    private boolean info_arp;
+    private final static String keyInfoArp = "info_arp";
+    private boolean info_port;
+    private final static String keyInfoPort = "info_port";
+    private Integer signalLevel;
+    private Integer position;
 
     /**
      * 기본 생성자
@@ -49,14 +54,14 @@ public class APInfo {
      * @param mac
      * @param ssid
      */
-    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt, int position) {
+    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt, Integer position) {
         setMAC(mac);
         setSSID(ssid);
         setPubIP("-");
         setDnsIP1("-");
         setDnsIP2("-");
         setSignalLevel(signalLevel);
-        setEncrypt(encrypt);
+        setInfoEncrypt(encrypt);
         setPosition(position);
     }
 
@@ -68,10 +73,20 @@ public class APInfo {
     public void setDBInfo(String json) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
 
-        if (jsonObject.getString(keyMAC) != null || !jsonObject.getString(keyInfo).equals("null")) setMAC(jsonObject.getString(keyMAC));
-        if (jsonObject.getString(keySSID) != null || !jsonObject.getString(keyInfo).equals("null")) setSSID(jsonObject.getString(keySSID));
-        if (jsonObject.getString(keySecureLevel) != null || !jsonObject.getString(keySecureLevel).equals("null")) setSecureLevel(jsonObject.getString(keySecureLevel));
-        if (jsonObject.getString(keyInfo) != null || !jsonObject.getString(keyInfo).equals("null")) setInfo(jsonObject.getString(keyInfo));
+        if (jsonObject.getString(keyMAC) != null && !jsonObject.getString(keyMAC).equals("-")) setMAC(jsonObject.getString(keyMAC));
+        if (jsonObject.getString(keySSID) != null && !jsonObject.getString(keySSID).equals("-")) setSSID(jsonObject.getString(keySSID));
+        if (jsonObject.getString(keySecureLevel) != null && !jsonObject.getString(keySecureLevel).equals("-")) setSecureLevel(jsonObject.getString(keySecureLevel));
+        if (jsonObject.getString(keySecureScore) != null) setSecureScore(jsonObject.getInt(keySecureScore));
+        if (jsonObject.getString(keyInfoEncrypt) != null) setInfoEncrypt(jsonObject.getString(keyInfoEncrypt));
+        if (jsonObject.getString(keyInfoDns) != null) setInfoDns(jsonObject.getInt(keyInfoDns));
+        if (jsonObject.getString(keyInfoArp) != null && !jsonObject.getString(keyInfoArp).equals("-")) {
+            if (jsonObject.getString(keyInfoArp).equals("N")) setInfoArp(false);
+            else setInfoArp(true);
+        }
+        if (jsonObject.getString(keyInfoPort) != null && !jsonObject.getString(keyInfoPort).equals("-")) {
+            if (jsonObject.getString(keyInfoPort).equals("N")) setInfoPort(false);
+            else setInfoPort(true);
+        }
 
         setPubIP("-");
         setDnsIP1("-");
@@ -84,29 +99,14 @@ public class APInfo {
      */
     public void setDHCP(DhcpInfo dhcpInfo) {
 
-        if (dhcpInfo.ipAddress != 0) {
-            setPubIP(Formatter.formatIpAddress(dhcpInfo.ipAddress));
-        } else {
-            setPubIP("-");
-        }
-        if (dhcpInfo.dns1 != 0) {
-            setDnsIP1(Formatter.formatIpAddress(dhcpInfo.dns1));
-        } else {
-            setDnsIP1("-");
-        }
-        if (dhcpInfo.dns2 != 0) {
-            setDnsIP2(Formatter.formatIpAddress(dhcpInfo.dns2));
-        } else {
-            setDnsIP2("-");
-        }
-    }
+        if (dhcpInfo.ipAddress != 0) setPubIP(Formatter.formatIpAddress(dhcpInfo.ipAddress));
+        else setPubIP("-");
 
-    public String getSSID() {
-        return ssid;
-    }
+        if (dhcpInfo.dns1 != 0) setDnsIP1(Formatter.formatIpAddress(dhcpInfo.dns1));
+        else setDnsIP1("-");
 
-    public void setSSID(String SSID) {
-        this.ssid = SSID;
+        if (dhcpInfo.dns2 != 0) setDnsIP2(Formatter.formatIpAddress(dhcpInfo.dns2));
+        else setDnsIP2("-");
     }
 
     public String getMAC() {
@@ -115,6 +115,14 @@ public class APInfo {
 
     public void setMAC(String mac) {
         this.mac = mac;
+    }
+
+    public String getSSID() {
+        return ssid;
+    }
+
+    public void setSSID(String ssid) {
+        this.ssid = ssid;
     }
 
     public String getPubIP() {
@@ -141,39 +149,6 @@ public class APInfo {
         this.dnsIP2 = dnsIP2;
     }
 
-    public String getEncrypt() {
-        return encrypt;
-    }
-
-    public void setEncrypt(String encrypt) {
-        if (encrypt != null) {
-            if (encrypt.contains("OPEN")) {
-                this.encrypt = "OPEN";
-            } else if (encrypt.contains("WEP")) {
-                this.encrypt = "WEP";
-            } else if (encrypt.contains("WPA")) {
-                if (encrypt.contains("2")){
-                    this.encrypt = "WPA2";
-                } else {
-                    this.encrypt = "WPA";
-                }
-            } else if (encrypt.contains("ESS")) {
-                this.encrypt = "WPA2";
-            } else {
-                this.encrypt = "UNKNOWN";
-            }
-        }
-
-    }
-
-    public Integer getSignalLevel() {
-        return signalLevel;
-    }
-
-    public void setSignalLevel(int signalLevel) {
-        this.signalLevel = signalLevel;
-    }
-
     public String getSecureLevel() {
         return secure_level;
     }
@@ -182,12 +157,70 @@ public class APInfo {
         this.secure_level = secure_level;
     }
 
-    public String getInfo() {
-        return info;
+    public Integer getSecureScore() {
+        return secure_score;
     }
 
-    public void setInfo(String info) {
-        this.info = info;
+    public void setSecureScore(Integer secure_score) {
+        this.secure_score = secure_score;
+    }
+
+    public String getInfoEncrypt() {
+        return info_encrypt;
+    }
+
+    public void setInfoEncrypt(String info_encrypt) {
+        if (info_encrypt != null) {
+            if (info_encrypt.contains("OPEN")) {
+                this.info_encrypt = "OPEN";
+            } else if (info_encrypt.contains("WEP")) {
+                this.info_encrypt = "WEP";
+            } else if (info_encrypt.contains("WPA2")) {
+                this.info_encrypt = "WPA2";
+            } else if (info_encrypt.contains("WPA")) {
+                this.info_encrypt = "WPA";
+            }
+        }
+    }
+
+    public Integer getInfoDns() {
+        return info_dns;
+    }
+
+    public void setInfoDns(Integer info_dns) {
+        this.info_dns = info_dns;
+    }
+
+    public boolean getInfoArp() {
+        return info_arp;
+    }
+
+    public void setInfoArp(boolean info_arp) {
+        this.info_arp = info_arp;
+    }
+
+    public boolean getInfoPort() {
+        return info_port;
+    }
+
+    public void setInfoPort(boolean info_port) {
+        this.info_port = info_port;
+    }
+
+    public Integer getSignalLevel() {
+        return signalLevel;
+    }
+
+    public void setSignalLevel(Integer signalLevel) {
+        this.signalLevel = signalLevel;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
     }
 
     /**
@@ -198,19 +231,21 @@ public class APInfo {
     public String toString(String op) {
         String result = "";
         if (op.equals(Command.GET))
-            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&"+ keyEncrypt + "=" + getEncrypt();
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&"+ keyInfoEncrypt + "=" + getInfoEncrypt();
         else if (op.equals(Command.PUT)) {
-            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2();
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2() + "&" + keyInfoEncrypt + "=" + getInfoEncrypt() + "&";
+
+            if (getInfoArp())
+                result += keyInfoArp + "=Y&";
+            else
+                result += keyInfoArp + "=N&";
+            if (getInfoPort())
+                result += keyInfoPort + "=Y";
+            else
+                result += keyInfoPort + "=N";
         }
 
         return result;
     }
 
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
-    }
 }
