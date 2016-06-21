@@ -3,6 +3,7 @@ package com.safewifi;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
@@ -19,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.safewifi.common.APInfo;
@@ -56,10 +58,17 @@ public class MainActivity extends Activity {
     private ListView listView;
     private APInfo curAP;
 
+    private ProgressBar pb_scan;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        startActivity(new Intent(this, Splash.class));
+
+        // 프로그레스바 매핑
+        pb_scan = (ProgressBar) findViewById(R.id.pb_scan);
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -275,6 +284,8 @@ public class MainActivity extends Activity {
 
         @Override
         protected  void onPreExecute() {
+            pb_scan.setVisibility(ProgressBar.VISIBLE);
+
             apInfoAdapter.clear();
 
             // 와이파이 비활성일 경우 활성화
@@ -319,6 +330,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             Collections.sort(apInfoList, new LevelAscCompare());
+            pb_scan.setVisibility(ProgressBar.GONE);
             apInfoAdapter.notifyDataSetChanged();
             super.onPostExecute(result);
         }
