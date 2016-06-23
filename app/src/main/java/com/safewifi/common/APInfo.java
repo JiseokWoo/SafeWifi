@@ -238,7 +238,7 @@ public class APInfo {
             } else if (getInfoEncrypt().contains(Command.ENCRYPT_WEP)) {
                 encrypt = Command.ENCRYPT_WEP;
             } else if (getInfoEncrypt().contains(Command.ENCRYPT_WPA2)) {
-                encrypt = Command.ENCRYPT_WEP;
+                encrypt = Command.ENCRYPT_WPA2;
             } else if (getInfoEncrypt().contains(Command.ENCRYPT_WPA)) {
                 encrypt = Command.ENCRYPT_WPA;
             }

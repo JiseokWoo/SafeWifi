@@ -4,9 +4,11 @@ package com.safewifi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
@@ -17,7 +19,6 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -25,6 +26,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.safewifi.common.APInfo;
+import com.safewifi.common.ARPTable;
 import com.safewifi.common.Command;
 import com.safewifi.common.ConnectWifi;
 
@@ -121,21 +123,13 @@ public class MainActivity extends Activity {
 
                 if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
                     secure_info += "공유기 암호화 설정 안됨\n";
-                } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP) || curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA)) {
+                } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP) || (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA) && !curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA2))) {
                     secure_info += "공유기 암호화 설정 취약\n";
                 }
 
-                if (curAP.getInfoDns() > 0) {
-                    secure_info += "DNS 변조 의심 : (" + curAP.getInfoDns() + "건 탐지)\n";
-                }
-
-                if (curAP.getInfoArp()) {
-                    secure_info += "ARP 테이블 변조 의심\n";
-                }
-
-                if (curAP.getInfoPort()) {
-                    secure_info += "비정상 포트 오픈";
-                }
+                if (curAP.getInfoDns() > 0) secure_info += "DNS 변조 의심 : (" + curAP.getInfoDns() + "건 탐지)\n";
+                if (curAP.getInfoArp()) secure_info += "ARP 테이블 변조 의심\n";
+                if (curAP.getInfoPort()) secure_info += "비정상 포트 오픈";
 
                 info.setText(secure_info);
             } else {
@@ -152,22 +146,16 @@ public class MainActivity extends Activity {
                     if (scanResultList != null) {
                         final ScanResult ap = scanResultList.get(curAP.getPosition());
 
+                        /*WifiReceiver wifiReceiver = new WifiReceiver();
+                        IntentFilter intentFilter = new IntentFilter();
+                        intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+                        registerReceiver(wifiReceiver, intentFilter);*/
+
                         if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
                             if (ConnectWifi.connect(wifiManager, ap, null)) {
                                 // TODO: AP 연결후 처리?
-                                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                adBuilder.setTitle("연결 성공");
-                                adBuilder.setMessage(ap.SSID + "에 연결되었습니다.");
-                                adBuilder.setNeutralButton("확인", null);
-                                AlertDialog alertDialog = adBuilder.create();
-                                alertDialog.show();
                             } else {
-                                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                adBuilder.setTitle("연결 실패");
-                                adBuilder.setMessage(ap.SSID + "에 연결하지 못했습니다.");
-                                adBuilder.setNeutralButton("확인", null);
-                                AlertDialog alertDialog = adBuilder.create();
-                                alertDialog.show();
+                                errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
                             }
                         } else {
                             LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -187,19 +175,8 @@ public class MainActivity extends Activity {
 
                                     if (ConnectWifi.connect(wifiManager, ap, password)) {
                                         // TODO: AP 연결후 처리?
-                                        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                        adBuilder.setTitle("연결 성공");
-                                        adBuilder.setMessage(ap.SSID + "에 연결되었습니다.");
-                                        adBuilder.setNeutralButton("확인", null);
-                                        AlertDialog alertDialog = adBuilder.create();
-                                        alertDialog.show();
                                     } else {
-                                        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                        adBuilder.setTitle("연결 실패");
-                                        adBuilder.setMessage(ap.SSID + "에 연결하지 못했습니다.");
-                                        adBuilder.setNeutralButton("확인", null);
-                                        AlertDialog alertDialog = adBuilder.create();
-                                        alertDialog.show();
+                                        errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
                                     }
 
                                 }
@@ -216,12 +193,7 @@ public class MainActivity extends Activity {
                             alertDialog.show();
                         }
                     } else {
-                        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                        adBuilder.setTitle("AP 정보 확인 에러");
-                        adBuilder.setMessage("AP 정보를 확인할 수 없습니다.\n새로고침 후 다시 시도해주세요.");
-                        adBuilder.setNeutralButton("확인", null);
-                        AlertDialog alertDialog = adBuilder.create();
-                        alertDialog.show();
+                        errorDialog("AP 정보 확인 에러", "AP 정보를 확인할 수 없습니다.\n새로고침 후 다시 시도해주세요.", "확인");
                     }
                 }
             });
@@ -234,6 +206,35 @@ public class MainActivity extends Activity {
 
         }
     };
+
+    private void errorDialog(String title, String msg, String button) {
+        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+        adBuilder.setTitle(title);
+        adBuilder.setMessage(msg);
+        adBuilder.setNeutralButton(button, null);
+        AlertDialog alertDialog = adBuilder.create();
+        alertDialog.show();
+    }
+
+    /*public class WifiReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
+                int error = intent.getIntExtra(WifiManager.EXTRA_SUPPLICANT_ERROR, -1);
+                if (error == WifiManager.ERROR_AUTHENTICATING) {
+                    AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+                    adBuilder.setTitle("인증 실패");
+                    adBuilder.setMessage("비밀번호가 올바르지 않습니다.");
+                    adBuilder.setNeutralButton("확인", null);
+                    AlertDialog alertDialog = adBuilder.create();
+                    alertDialog.show();
+                }
+            }
+        }
+    }*/
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -357,6 +358,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
+            //pbDialog = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다. 잠시만 기다려주세요.");
             wifiManager.startScan();
             scanResultList = wifiManager.getScanResults();
         }
@@ -376,9 +378,9 @@ public class MainActivity extends Activity {
 
                 APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt, apInfoList.size());
                 apInfo.setDHCP(dhcpInfo);
+                apInfo.setInfoArp(ARPTable.checkARPSpoof());
 
                 // TODO: 테스트용
-                apInfo.setInfoArp(true);
                 apInfo.setInfoPort(true);
 
                 // 서버에 현재 AP 정보 업로드
@@ -391,8 +393,8 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
+            //pbDialog.dismiss();
             super.onPostExecute(result);
-            scanResultList = null;
         }
     }
 

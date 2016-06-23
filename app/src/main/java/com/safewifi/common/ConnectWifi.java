@@ -71,17 +71,28 @@ public class ConnectWifi {
 
     public static boolean connect(WifiManager wifiManager, ScanResult ap, String password) {
         WifiConfiguration config = null;
+        List<WifiConfiguration> wifiConfigurationList = wifiManager.getConfiguredNetworks();
 
-        if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
-            config = ConfigOpen(ap.SSID, ap.BSSID);
-        } else if (ap.capabilities.contains(Command.ENCRYPT_WEP)) {
-            config = ConfigWEP(ap.SSID, ap.BSSID, password);
-        } else if (ap.capabilities.contains(Command.ENCRYPT_WPA)) {
-            config = ConfigWPA(ap.SSID, ap.BSSID, password);
+        for (WifiConfiguration configuration : wifiConfigurationList) {
+            if (configuration.SSID.equals("\"" + ap.SSID + "\"")) {
+                config = configuration;
+                break;
+            }
+        }
+
+        if (config == null) {
+            if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
+                config = ConfigOpen(ap.SSID, ap.BSSID);
+            } else if (ap.capabilities.contains(Command.ENCRYPT_WEP)) {
+                config = ConfigWEP(ap.SSID, ap.BSSID, password);
+            } else if (ap.capabilities.contains(Command.ENCRYPT_WPA)) {
+                config = ConfigWPA(ap.SSID, ap.BSSID, password);
+            }
         }
 
         if (config != null) {
             int networkID = wifiManager.addNetwork(config);
+
             if (networkID != -1) {
                 return wifiManager.enableNetwork(networkID, true);
             }
