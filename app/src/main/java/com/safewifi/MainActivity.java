@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     private APInfo curAP;
 
     private ProgressDialog pbDialog;
+    private ProgressDialog pbDialog2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,10 +89,10 @@ public class MainActivity extends Activity {
 
         // 현재 AP 연결중일 경우
         if (wifiInfo.getBSSID() != null) {
-            new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
+           new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
+        } else {
+            new ScanAP().execute();
         }
-
-        new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
 
     }
 
@@ -358,7 +359,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
-            //pbDialog = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다. 잠시만 기다려주세요.");
+            pbDialog2 = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다. 잠시만 기다려주세요.");
             wifiManager.startScan();
             scanResultList = wifiManager.getScanResults();
         }
@@ -393,7 +394,8 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            //pbDialog.dismiss();
+            pbDialog2.dismiss();
+            new ScanAP().execute();
             super.onPostExecute(result);
         }
     }
