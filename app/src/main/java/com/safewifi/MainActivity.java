@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Typeface;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
@@ -27,6 +28,7 @@ import com.safewifi.common.APInfo;
 import com.safewifi.common.ARPTable;
 import com.safewifi.common.Command;
 import com.safewifi.common.ConnectWifi;
+import com.safewifi.common.Util;
 
 import org.json.JSONException;
 
@@ -76,7 +78,7 @@ public class MainActivity extends Activity {
         actionBar.setDisplayShowTitleEnabled(true);
         View customActionView = LayoutInflater.from(this).inflate(R.layout.action_bar, null);
         actionBar.setCustomView(customActionView);
-       
+
 
 
 
@@ -157,6 +159,8 @@ public class MainActivity extends Activity {
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
             adBuilder.setTitle(curAP.getSSID() + "의 정보");
             adBuilder.setView(layout);
+
+
 
             adBuilder.setPositiveButton("연결", new DialogInterface.OnClickListener() {
                 @Override
@@ -283,6 +287,10 @@ public class MainActivity extends Activity {
                 TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
                 TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
                 TextView tv_info = (TextView) view.findViewById(R.id.tv_info);
+
+                tv_ssid.setTypeface(Typeface.createFromAsset(this.getContext().getAssets(), "DroidSansFallback.ttf"));
+
+
 
                 if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
                 // TODO: 신호 강도 정보 UI 표시
