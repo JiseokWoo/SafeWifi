@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -81,7 +82,7 @@ public class MainActivity extends Activity {
         apInfoList = new ArrayList<>();
 
         // 리스트뷰를 위한 adapter 생성
-        apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row, apInfoList);
+        apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row_img, apInfoList);
 
         listView = (ListView) findViewById(R.id.lv_aplist);
         listView.setOnItemClickListener(onItemClickListener);
@@ -268,28 +269,34 @@ public class MainActivity extends Activity {
 
             if (view == null) {
                 LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                view = layoutInflater.inflate(R.layout.row, null);
+                view = layoutInflater.inflate(R.layout.row_img, null);
             }
 
             APInfo apInfo = apInfoList.get(position);
 
-            if (apInfo != null) {
-                TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-                TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
-                TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
-                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
-                TextView tv_info = (TextView) view.findViewById(R.id.tv_info);
+            ImageView iv_secure = (ImageView) view.findViewById(R.id.iv_security);
 
-                if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
-                // TODO: 신호 강도 정보 UI 표시
-                if (tv_signal != null && apInfo.getSignalLevel() != null) {
-                    // -90 ~ -20
-                    tv_signal.setText(apInfo.getSignalLevel().toString());
+            if (apInfo != null) {
+                // security-level
+                if (apInfo.getSecureLevel() == null) {
+                    iv_secure.setImageResource(R.mipmap.unknown);
+                } else {
+                    if (apInfo.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
+                        iv_secure.setImageResource(R.mipmap.intro);
+                    } else if (apInfo.getSecureLevel().equals(Command.SECURE_LEVEL_MEDIUM)) {
+                        iv_secure.setImageResource(R.mipmap.ic_launcher);
+                    } else if (apInfo.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
+                        iv_secure.setImageResource(R.mipmap.refresh);
+                    }
                 }
-                // TODO: 보안도 정보 UI 표시
-                if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
-                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
-                //if (tv_info != null && apInfo.getInfo() != null) tv_info.setText(apInfo.getInfo());
+
+
+                // ssid
+                TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+
+
+                // signal
+
             }
 
             return view;
