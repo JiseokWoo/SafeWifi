@@ -1,6 +1,7 @@
 package com.safewifi;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 
@@ -18,8 +19,10 @@ public class Splash extends Activity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                Intent intent = new Intent(Splash.this, MainActivity.class);
+                startActivity(new Intent(intent));
                 finish();
             }
-        }, 3000);
+        }, 2000);
     }
 }
