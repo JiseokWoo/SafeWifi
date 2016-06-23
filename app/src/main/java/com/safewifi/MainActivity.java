@@ -1,6 +1,7 @@
 package com.safewifi;
 
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -18,8 +19,11 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -57,6 +61,7 @@ public class MainActivity extends Activity {
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
     private ListView listView;
+    private ImageButton imageButton;
     private APInfo curAP;
 
     private ProgressDialog pbDialog;
@@ -64,10 +69,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
-        startActivity(new Intent(this, Splash.class));
-        SystemClock.sleep(2000);
+        // 어플 아이콘, 타이틀, 새로고침 버튼
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(true);
+        View customActionView = LayoutInflater.from(this).inflate(R.layout.action_bar, null);
+        actionBar.setCustomView(customActionView);
+       
+
+
+
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -90,6 +104,14 @@ public class MainActivity extends Activity {
 
         new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
 
+        //새로고침 버튼 클릭, 스캔 다시 시작
+        imageButton = (ImageButton) findViewById(R.id.scan_refresh);
+        imageButton.setOnClickListener(new ImageButton.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                new ScanAP().execute();
+            }
+        });
     }
 
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
@@ -197,6 +219,7 @@ public class MainActivity extends Activity {
             }
         }
     };
+
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
@@ -462,4 +485,5 @@ public class MainActivity extends Activity {
 
         return true;
     }
+
 }
