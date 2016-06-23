@@ -34,6 +34,8 @@ public class APInfo {
     private final static String keyInfoArp = "info_arp";
     private boolean info_port;
     private final static String keyInfoPort = "info_port";
+    private int conn_count;
+    private final static String keyConnCount = "conn_count";
     private Integer signalLevel;
     private Integer position;
 
@@ -77,7 +79,7 @@ public class APInfo {
         if (jsonObject.getString(keySSID) != null && !jsonObject.getString(keySSID).equals("-")) setSSID(jsonObject.getString(keySSID));
         if (jsonObject.getString(keySecureLevel) != null && !jsonObject.getString(keySecureLevel).equals("-")) setSecureLevel(jsonObject.getString(keySecureLevel));
         if (jsonObject.getString(keySecureScore) != null) setSecureScore(jsonObject.getInt(keySecureScore));
-        if (jsonObject.getString(keyInfoEncrypt) != null) setInfoEncrypt(jsonObject.getString(keyInfoEncrypt));
+        if (jsonObject.getString(keyConnCount) != null) setConnCount(jsonObject.getInt(keyConnCount));
         if (jsonObject.getString(keyInfoDns) != null) setInfoDns(jsonObject.getInt(keyInfoDns));
         if (jsonObject.getString(keyInfoArp) != null && !jsonObject.getString(keyInfoArp).equals("-")) {
             if (jsonObject.getString(keyInfoArp).equals("N")) setInfoArp(false);
@@ -87,6 +89,7 @@ public class APInfo {
             if (jsonObject.getString(keyInfoPort).equals("N")) setInfoPort(false);
             else setInfoPort(true);
         }
+        if (jsonObject.getString(keyInfoDns) != null) setInfoDns(jsonObject.getInt(keyInfoDns));
 
         setPubIP("-");
         setDnsIP1("-");
@@ -170,17 +173,7 @@ public class APInfo {
     }
 
     public void setInfoEncrypt(String info_encrypt) {
-        if (info_encrypt != null) {
-            if (info_encrypt.contains("OPEN")) {
-                this.info_encrypt = "OPEN";
-            } else if (info_encrypt.contains("WEP")) {
-                this.info_encrypt = "WEP";
-            } else if (info_encrypt.contains("WPA2")) {
-                this.info_encrypt = "WPA2";
-            } else if (info_encrypt.contains("WPA")) {
-                this.info_encrypt = "WPA";
-            }
-        }
+        this.info_encrypt = info_encrypt;
     }
 
     public Integer getInfoDns() {
@@ -207,6 +200,14 @@ public class APInfo {
         this.info_port = info_port;
     }
 
+    public int getConnCount() {
+        return conn_count;
+    }
+
+    public void setConnCount(int conn_count) {
+        this.conn_count = conn_count;
+    }
+
     public Integer getSignalLevel() {
         return signalLevel;
     }
@@ -230,10 +231,23 @@ public class APInfo {
      */
     public String toString(String op) {
         String result = "";
+        String encrypt = "-";
+        if (getInfoEncrypt() != null) {
+            if (getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
+                encrypt = Command.ENCRYPT_OPEN;
+            } else if (getInfoEncrypt().contains(Command.ENCRYPT_WEP)) {
+                encrypt = Command.ENCRYPT_WEP;
+            } else if (getInfoEncrypt().contains(Command.ENCRYPT_WPA2)) {
+                encrypt = Command.ENCRYPT_WPA2;
+            } else if (getInfoEncrypt().contains(Command.ENCRYPT_WPA)) {
+                encrypt = Command.ENCRYPT_WPA;
+            }
+        }
+
         if (op.equals(Command.GET))
-            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&"+ keyInfoEncrypt + "=" + getInfoEncrypt();
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&"+ keyInfoEncrypt + "=" + encrypt;
         else if (op.equals(Command.PUT)) {
-            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2() + "&" + keyInfoEncrypt + "=" + getInfoEncrypt() + "&";
+            result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2() + "&" + keyInfoEncrypt + "=" + encrypt + "&";
 
             if (getInfoArp())
                 result += keyInfoArp + "=Y&";
@@ -247,5 +261,6 @@ public class APInfo {
 
         return result;
     }
+
 
 }

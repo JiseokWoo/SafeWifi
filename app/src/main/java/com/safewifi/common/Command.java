@@ -26,4 +26,10 @@ public class Command {
     public final static String SECURE_LEVEL_MEDIUM = "M";
     public final static String SECURE_LEVEL_LOW = "L";
 
+    // encrypt
+    public final static String ENCRYPT_OPEN = "OPEN";
+    public final static String ENCRYPT_WEP = "WEP";
+    public final static String ENCRYPT_WPA = "WPA";
+    public final static String ENCRYPT_WPA2 = "WPA2";
+
 }
