@@ -5,30 +5,21 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-<<<<<<< HEAD
 import android.widget.ImageButton;
-import android.widget.ImageView;
-=======
 import android.widget.EditText;
->>>>>>> dev_jiseok
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -104,16 +95,6 @@ public class MainActivity extends Activity {
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         wifiInfo = wifiManager.getConnectionInfo();
 
-        // 현재 AP 연결중일 경우
-        if (wifiInfo.getBSSID() != null) {
-           new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
-        } else {
-            new ScanAP().execute();
-        }
-
-<<<<<<< HEAD
-        new ScanAP().execute();         // 주변 AP 스캔후 서버로 정보 조회
-
         //새로고침 버튼 클릭, 스캔 다시 시작
         imageButton = (ImageButton) findViewById(R.id.scan_refresh);
         imageButton.setOnClickListener(new ImageButton.OnClickListener(){
@@ -122,8 +103,14 @@ public class MainActivity extends Activity {
                 new ScanAP().execute();
             }
         });
-=======
->>>>>>> dev_jiseok
+
+        // 현재 AP 연결중일 경우
+        if (wifiInfo.getBSSID() != null) {
+           new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
+        } else {
+            new ScanAP().execute();
+        }
+
     }
 
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
@@ -526,17 +513,4 @@ public class MainActivity extends Activity {
         return response;
     }
 
-<<<<<<< HEAD
-    private boolean WifiConnect(String mac, String ssid) {
-        WifiConfiguration wifiConfiguration = new WifiConfiguration();
-        wifiConfiguration.SSID = ssid;
-        wifiConfiguration.BSSID = mac;
-        wifiConfiguration.priority = 1;
-
-
-        return true;
-    }
-
-=======
->>>>>>> dev_jiseok
 }
