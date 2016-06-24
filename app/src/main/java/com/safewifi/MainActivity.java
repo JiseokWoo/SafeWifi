@@ -275,6 +275,9 @@ public class MainActivity extends Activity {
             APInfo apInfo = apInfoList.get(position);
 
             ImageView iv_secure = (ImageView) view.findViewById(R.id.iv_security);
+            TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+            ImageView iv_signal = (ImageView) view.findViewById(R.id.iv_signal);
+
 
             if (apInfo != null) {
                 // security-level
@@ -292,11 +295,22 @@ public class MainActivity extends Activity {
 
 
                 // ssid
-                TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-
+                tv_ssid.setText(apInfo.getSSID().toString());
 
                 // signal
-
+                if (apInfo.getSignalLevel() == null) {
+                    iv_signal.setImageResource(R.mipmap.unknown);
+                } else {
+                    if (apInfo.getSignalLevel() > -60){
+                        iv_signal.setImageResource(R.mipmap.intro);
+                    } else if (apInfo.getSignalLevel() > -80){
+                        iv_signal.setImageResource(R.mipmap.ic_launcher);
+                    } else if (apInfo.getSignalLevel() > -100) {
+                        iv_signal.setImageResource(R.mipmap.refresh);
+                    } else {
+                        iv_signal.setImageResource(R.mipmap.refresh);
+                    }
+                }
             }
 
             return view;
