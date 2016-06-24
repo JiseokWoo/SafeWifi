@@ -69,7 +69,7 @@ public class ConnectWifi {
         return config;
     }
 
-    public static boolean connect(WifiManager wifiManager, ScanResult ap, String password) {
+    public static WifiConfiguration findStoredConfig(WifiManager wifiManager, ScanResult ap) {
         WifiConfiguration config = null;
         List<WifiConfiguration> wifiConfigurationList = wifiManager.getConfiguredNetworks();
 
@@ -80,14 +80,18 @@ public class ConnectWifi {
             }
         }
 
-        if (config == null) {
-            if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
-                config = ConfigOpen(ap.SSID, ap.BSSID);
-            } else if (ap.capabilities.contains(Command.ENCRYPT_WEP)) {
-                config = ConfigWEP(ap.SSID, ap.BSSID, password);
-            } else if (ap.capabilities.contains(Command.ENCRYPT_WPA)) {
-                config = ConfigWPA(ap.SSID, ap.BSSID, password);
-            }
+        return config;
+    }
+
+    public static boolean connect(WifiManager wifiManager, ScanResult ap) {
+        WifiConfiguration config = findStoredConfig(wifiManager, ap);
+
+        if (config != null) {
+            return connect(wifiManager, config);
+        }
+
+        if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
+            config = ConfigOpen(ap.SSID, ap.BSSID);
         }
 
         if (config != null) {
@@ -99,5 +103,29 @@ public class ConnectWifi {
         }
 
         return false;
+    }
+
+    public static boolean connect(WifiManager wifiManager, ScanResult ap, String password) {
+        WifiConfiguration config = null;
+
+        if (ap.capabilities.contains(Command.ENCRYPT_WEP)) {
+            config = ConfigWEP(ap.SSID, ap.BSSID, password);
+        } else if (ap.capabilities.contains(Command.ENCRYPT_WPA)) {
+            config = ConfigWPA(ap.SSID, ap.BSSID, password);
+        }
+
+        if (config != null) {
+            int networkID = wifiManager.addNetwork(config);
+
+            if (networkID != -1) {
+                return wifiManager.enableNetwork(networkID, true);
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean connect(WifiManager wifiManager, WifiConfiguration config) {
+        return wifiManager.enableNetwork(config.networkId, true);
     }
 }

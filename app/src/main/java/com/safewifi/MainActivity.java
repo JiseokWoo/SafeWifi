@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -18,8 +19,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -63,6 +64,9 @@ public class MainActivity extends Activity {
 
     private ProgressDialog pbScan;
     private ProgressDialog pbCheck;
+    private ProgressDialog pbConnect;
+
+    //private WifiReceiver wifiReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +95,13 @@ public class MainActivity extends Activity {
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         wifiInfo = wifiManager.getConnectionInfo();
 
-        //새로고침 버튼 클릭, 스캔 다시 시작
+        /*wifiReceiver = new WifiReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        registerReceiver(wifiReceiver, intentFilter);*/
+
+        // ;새로고침 버튼 클릭, 스캔 다시 시작
         imageButton = (ImageButton) findViewById(R.id.scan_refresh);
         imageButton.setOnClickListener(new ImageButton.OnClickListener(){
             @Override
@@ -160,11 +170,6 @@ public class MainActivity extends Activity {
                     if (scanResultList != null) {
                         final ScanResult ap = scanResultList.get(curAP.getPosition());
 
-                        /*WifiReceiver wifiReceiver = new WifiReceiver();
-                        IntentFilter intentFilter = new IntentFilter();
-                        intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
-                        registerReceiver(wifiReceiver, intentFilter);*/
-
                         if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
                             if (ConnectWifi.connect(wifiManager, ap, null)) {
                                 // TODO: AP 연결후 처리?
@@ -172,39 +177,46 @@ public class MainActivity extends Activity {
                                 errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
                             }
                         } else {
-                            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                            View layout = inflater.inflate(R.layout.connect, null);
-                            final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
-                            et_password.setPrivateImeOptions("defaultInputmode=english;");
 
-                            AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                            adBuilder.setTitle(curAP.getSSID() + "에 연결");
-                            adBuilder.setView(layout);
+                            WifiConfiguration config = ConnectWifi.findStoredConfig(wifiManager, ap);
 
-                            adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
+                            if (config == null) {
+                                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+                                View layout = inflater.inflate(R.layout.connect, null);
+                                final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
+                                et_password.setPrivateImeOptions("defaultInputmode=english;");
 
-                                    String password = et_password.getText().toString();
+                                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+                                adBuilder.setTitle(curAP.getSSID() + "에 연결");
+                                adBuilder.setView(layout);
 
-                                    if (ConnectWifi.connect(wifiManager, ap, password)) {
-                                        // TODO: AP 연결후 처리?
-                                    } else {
-                                        errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
+                                adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                        String password = et_password.getText().toString();
+
+                                        if (ConnectWifi.connect(wifiManager, ap, password)) {
+                                            // TODO: AP 연결후 처리?
+                                        } else {
+                                            errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
+                                        }
+
                                     }
+                                });
 
-                                }
-                            });
+                                adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
 
-                            adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-
-                            AlertDialog alertDialog = adBuilder.create();
-                            alertDialog.show();
+                                AlertDialog alertDialog = adBuilder.create();
+                                alertDialog.show();
+                            } else {
+                                ConnectWifi.connect(wifiManager, config);
+                            }
                         }
                     } else {
                         errorDialog("AP 정보 확인 에러", "AP 정보를 확인할 수 없습니다.\n새로고침 후 다시 시도해주세요.", "확인");
@@ -239,17 +251,28 @@ public class MainActivity extends Activity {
             if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
                 int error = intent.getIntExtra(WifiManager.EXTRA_SUPPLICANT_ERROR, -1);
                 if (error == WifiManager.ERROR_AUTHENTICATING) {
-                    AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                    adBuilder.setTitle("인증 실패");
-                    adBuilder.setMessage("비밀번호가 올바르지 않습니다.");
-                    adBuilder.setNeutralButton("확인", null);
-                    AlertDialog alertDialog = adBuilder.create();
-                    alertDialog.show();
+                    Toast toast = Toast.makeText(com.safewifi.MainActivity.this, "비밀번호가 올바르지 않습니다.", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+
+                int info = intent.getIntExtra(WifiManager.EXTRA_NEW_STATE, -1);
+
+
+
+            } else if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+                int info = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, -1);
+
+                if (info == WifiManager.WIFI_STATE_ENABLING) {
+                    pbScan = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
+                }
+                if (info == WifiManager.WIFI_STATE_ENABLED) {
+                    if (pbScan != null && pbScan.isShowing()) {
+                        pbScan.dismiss();
+                    }
                 }
             }
         }
     }*/
-
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
