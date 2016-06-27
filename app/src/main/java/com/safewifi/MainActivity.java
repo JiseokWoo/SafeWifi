@@ -260,7 +260,8 @@ public class MainActivity extends Activity {
         tv_title.setText(content);
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         tv_title.setTextColor(Color.parseColor("#ef3636"));
-        tv_title.setTextSize(25);
+        tv_title.setTextSize(20);
+        tv_title.setPadding(40,40,40,40);
 
 
         return tv_title;
