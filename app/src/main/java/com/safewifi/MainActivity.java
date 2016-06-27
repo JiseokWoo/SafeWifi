@@ -10,7 +10,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.Image;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
@@ -19,7 +21,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,6 +86,8 @@ public class MainActivity extends Activity {
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(true);
         View customActionView = LayoutInflater.from(this).inflate(R.layout.action_bar, null);
+        TextView tv_title = (TextView) customActionView.findViewById(R.id.tv_title);
+        tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         actionBar.setCustomView(customActionView);
 
         // APInfo 객체가 저장될 리스트
@@ -166,7 +169,7 @@ public class MainActivity extends Activity {
             }
 
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-            adBuilder.setTitle(curAP.getSSID() + "의 정보");
+            adBuilder.setCustomTitle(setFont(curAP.getSSID() + "의 정보"));
             adBuilder.setView(layout);
 
             adBuilder.setPositiveButton("연결", new DialogInterface.OnClickListener() {
@@ -192,7 +195,7 @@ public class MainActivity extends Activity {
                                 et_password.setPrivateImeOptions("defaultInputmode=english;");
 
                                 AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                adBuilder.setTitle(curAP.getSSID() + "에 연결");
+                                adBuilder.setCustomTitle(setFont(curAP.getSSID() + "에 연결"));
                                 adBuilder.setView(layout);
 
                                 adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
@@ -230,20 +233,34 @@ public class MainActivity extends Activity {
             });
 
             adBuilder.setNegativeButton("취소", null);
-
             AlertDialog alertDialog = adBuilder.create();
             alertDialog.show();
-
+            int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
+            View titleDivider = alertDialog.findViewById(titleDividerId);
+            if (titleDivider != null)
+                titleDivider.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
         }
     };
 
     private void errorDialog(String title, String msg, String button) {
-        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-        adBuilder.setTitle(title);
+        AlertDialog.Builder adBuilder = new AlertDialog.Builder(getApplicationContext());
+        adBuilder.setCustomTitle(setFont(title));
+        setTitle(title);
         adBuilder.setMessage(msg);
         adBuilder.setNeutralButton(button, null);
         AlertDialog alertDialog = adBuilder.create();
+
         alertDialog.show();
+    }
+
+    private TextView setFont(String content) {
+        TextView tv_title = new TextView(getApplicationContext());
+        tv_title.setText(content);
+        tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
+        tv_title.setTextColor(Color.parseColor("#ef3636"));
+        tv_title.setTextSize(25);
+
+        return tv_title;
     }
 
     public class WifiReceiver extends BroadcastReceiver {
@@ -348,6 +365,7 @@ public class MainActivity extends Activity {
                 if (tv_ssid != null && apInfo.getSSID() != null) {
                     tv_ssid.setText(apInfo.getSSID());
                 }
+                tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
 
                 // 신호 강도 정보 UI 표시
                 if (iv_signal != null && signal_level != null) {

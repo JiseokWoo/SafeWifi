@@ -40,18 +40,6 @@ public class APInfo {
     private Integer position;
 
     /**
-     * 기본 생성자
-     */
-    public APInfo() {
-        setSSID("-");
-        setMAC("-");
-        setPubIP("-");
-        setDnsIP1("-");
-        setDnsIP2("-");
-        setPosition(0);
-    }
-
-    /**
      * MAC 주소와 SSID 값만 설정하는 생성자
      * @param mac
      * @param ssid
@@ -250,13 +238,9 @@ public class APInfo {
             result += keyMAC + "=" + getMAC() + "&" + keySSID + "=" + getSSID() + "&" + keyPubIP + "=" + getPubIP() + "&" + keyDnsIP1 + "=" + getDnsIP1() + "&" + keyDnsIP2 + "=" + getDnsIP2() + "&" + keyInfoEncrypt + "=" + encrypt + "&";
 
             if (getInfoArp())
-                result += keyInfoArp + "=Y&";
+                result += keyInfoArp + "=Y";
             else
-                result += keyInfoArp + "=N&";
-            if (getInfoPort())
-                result += keyInfoPort + "=Y";
-            else
-                result += keyInfoPort + "=N";
+                result += keyInfoArp + "=N";
         }
 
         return result;
