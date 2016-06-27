@@ -5,15 +5,20 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +28,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.safewifi.common.APInfo;
 import com.safewifi.common.ARPTable;
@@ -56,6 +62,7 @@ public class MainActivity extends Activity {
     private APInfoAdapter apInfoAdapter;
     private WifiManager wifiManager;
     private WifiInfo wifiInfo;
+    private WifiReceiver wifiReceiver;
     private List<ScanResult> scanResultList;
     private List<APInfo> apInfoList;
     private ListView listView;
@@ -64,9 +71,6 @@ public class MainActivity extends Activity {
 
     private ProgressDialog pbScan;
     private ProgressDialog pbCheck;
-    private ProgressDialog pbConnect;
-
-    //private WifiReceiver wifiReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,11 +99,10 @@ public class MainActivity extends Activity {
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         wifiInfo = wifiManager.getConnectionInfo();
 
-        /*wifiReceiver = new WifiReceiver();
+        wifiReceiver = new WifiReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
-        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        registerReceiver(wifiReceiver, intentFilter);*/
+        registerReceiver(wifiReceiver, intentFilter);
 
         // ;새로고침 버튼 클릭, 스캔 다시 시작
         imageButton = (ImageButton) findViewById(R.id.scan_refresh);
@@ -224,7 +227,6 @@ public class MainActivity extends Activity {
                 }
             });
 
-
             adBuilder.setNegativeButton("취소", null);
 
             AlertDialog alertDialog = adBuilder.create();
@@ -242,7 +244,7 @@ public class MainActivity extends Activity {
         alertDialog.show();
     }
 
-    /*public class WifiReceiver extends BroadcastReceiver {
+    public class WifiReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -250,29 +252,54 @@ public class MainActivity extends Activity {
 
             if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
                 int error = intent.getIntExtra(WifiManager.EXTRA_SUPPLICANT_ERROR, -1);
-                if (error == WifiManager.ERROR_AUTHENTICATING) {
-                    Toast toast = Toast.makeText(com.safewifi.MainActivity.this, "비밀번호가 올바르지 않습니다.", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
+                SupplicantState state = intent.getParcelableExtra(WifiManager.EXTRA_NEW_STATE);
 
-                int info = intent.getIntExtra(WifiManager.EXTRA_NEW_STATE, -1);
+                if(error == WifiManager.ERROR_AUTHENTICATING) {
+                    Toast.makeText(context, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+                    ScanResult ap = scanResultList.get(curAP.getPosition());
+                    WifiConfiguration wifiConfiguration = ConnectWifi.findStoredConfig(wifiManager, ap);
 
-
-
-            } else if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-                int info = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, -1);
-
-                if (info == WifiManager.WIFI_STATE_ENABLING) {
-                    pbScan = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
-                }
-                if (info == WifiManager.WIFI_STATE_ENABLED) {
-                    if (pbScan != null && pbScan.isShowing()) {
-                        pbScan.dismiss();
+                    if (wifiConfiguration != null) {
+                        wifiManager.removeNetwork(wifiConfiguration.networkId);
                     }
+                }
+
+                switch(state) {
+                    case ASSOCIATED:
+                        break;
+                    case ASSOCIATING:
+                        break;
+                    case AUTHENTICATING:
+                        Toast.makeText(context, "인증을 진행하고 있습니다.", Toast.LENGTH_SHORT).show();
+                        break;
+                    case COMPLETED:
+                        Toast.makeText(context, "연결되었습니다.", Toast.LENGTH_SHORT).show();
+                        break;
+                    case DISCONNECTED:
+                        break;
+                    case DORMANT:
+                        break;
+                    case FOUR_WAY_HANDSHAKE:
+                        Toast.makeText(context, "연결중입니다.", Toast.LENGTH_SHORT).show();
+                        break;
+                    case GROUP_HANDSHAKE:
+                        break;
+                    case INACTIVE:
+                        break;
+                    case INTERFACE_DISABLED:
+                        break;
+                    case INVALID:
+                        break;
+                    case SCANNING:
+                        break;
+                    case UNINITIALIZED:
+                        break;
+                    default:
+                        break;
                 }
             }
         }
-    }*/
+    }
 
     /**
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
