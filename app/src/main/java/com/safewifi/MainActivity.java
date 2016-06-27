@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.Image;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
@@ -26,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -273,7 +275,7 @@ public class MainActivity extends Activity {
                         Toast.makeText(context, "인증을 진행하고 있습니다.", Toast.LENGTH_SHORT).show();
                         break;
                     case COMPLETED:
-                        Toast.makeText(context, "연결되었습니다.", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context, "연결되었습니다.", Toast.LENGTH_SHORT).show();
                         break;
                     case DISCONNECTED:
                         break;
@@ -324,22 +326,42 @@ public class MainActivity extends Activity {
             APInfo apInfo = apInfoList.get(position);
 
             if (apInfo != null) {
+                ImageView iv_security = (ImageView) view.findViewById(R.id.iv_security);
                 TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-                TextView tv_signal = (TextView) view.findViewById(R.id.tv_signal);
-                TextView tv_security = (TextView) view.findViewById(R.id.tv_security);
-                TextView tv_mac = (TextView) view.findViewById(R.id.tv_mac);
-                TextView tv_info = (TextView) view.findViewById(R.id.tv_info);
+                ImageView iv_signal = (ImageView) view.findViewById(R.id.iv_signal);
 
-                if (tv_ssid != null && apInfo.getSSID() != null) tv_ssid.setText(apInfo.getSSID());
-                // TODO: 신호 강도 정보 UI 표시
-                if (tv_signal != null && apInfo.getSignalLevel() != null) {
-                    // -90 ~ -20
-                    tv_signal.setText(apInfo.getSignalLevel().toString());
+                String secure_level = apInfo.getSecureLevel();
+                Integer signal_level = apInfo.getSignalLevel();
+
+                // 보안도 정보 UI 표시
+                if (iv_security != null && secure_level != null) {
+                    if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
+                        iv_security.setImageResource(R.mipmap.secure_level_h);
+                    } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
+                        iv_security.setImageResource(R.mipmap.secure_level_m);
+                    } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
+                        iv_security.setImageResource(R.mipmap.secure_level_l);
+                    }
                 }
-                // TODO: 보안도 정보 UI 표시
-                if (tv_security != null && apInfo.getSecureLevel() != null) tv_security.setText(apInfo.getSecureLevel());
-                if (tv_mac != null && apInfo.getMAC() != null) tv_mac.setText(apInfo.getMAC());
-                //if (tv_info != null && apInfo.getInfo() != null) tv_info.setText(apInfo.getInfo());
+
+                // SSID 표시
+                if (tv_ssid != null && apInfo.getSSID() != null) {
+                    tv_ssid.setText(apInfo.getSSID());
+                }
+
+                // 신호 강도 정보 UI 표시
+                if (iv_signal != null && signal_level != null) {
+                    if (signal_level > -50) {
+                        iv_signal.setImageResource(R.mipmap.signal_excellent);
+                    } else if (signal_level > -60) {
+                        iv_signal.setImageResource(R.mipmap.signal_good);
+                    } else if (signal_level > -70) {
+                        iv_signal.setImageResource(R.mipmap.signal_fair);
+                    } else if (signal_level <= -70) {
+                        iv_signal.setImageResource(R.mipmap.signal_poor);
+                    }
+                }
+
             }
 
             return view;
