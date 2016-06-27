@@ -19,16 +19,16 @@
         android:layout_alignParentTop="true" />
 
     <TextView
-        android:paddingTop="10dp"
+        android:paddingTop="15dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Wi - Fine :-)   "
+        android:text="Wi - Fine "
         android:id="@+id/tv_title"
         android:height="50dp"
         android:textColor="#ef3636"
         android:textColorHighlight="#231818"
-        android:textSize="20dp"
+        android:textSize="15dp"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"

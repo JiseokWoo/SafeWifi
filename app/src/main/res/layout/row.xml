@@ -2,11 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="55dp">
+    android:layout_height="55dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp">
 
         <ImageView
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:src="@mipmap/secure_level_u"
             android:id="@+id/iv_security"
             android:layout_gravity="center_vertical" />
@@ -15,6 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tv_ssid"
+            android:textSize="15dp"
             android:layout_gravity="center_vertical"
             android:layout_marginLeft="15dp" />
 
@@ -25,8 +28,8 @@
             />
 
         <ImageView
-            android:layout_width="55dp"
-            android:layout_height="55dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:id="@+id/iv_signal"
             android:layout_gravity="center_vertical" />
 

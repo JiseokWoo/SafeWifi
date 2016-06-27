@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
         apInfoList = new ArrayList<>();
 
         // 리스트뷰를 위한 adapter 생성
-        apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row_img, apInfoList);
+        apInfoAdapter = new APInfoAdapter(getApplicationContext(), R.layout.row, apInfoList);
 
         listView = (ListView) findViewById(R.id.lv_aplist);
         listView.setOnItemClickListener(onItemClickListener);
@@ -338,7 +338,7 @@ public class MainActivity extends Activity {
 
             if (view == null) {
                 LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                view = layoutInflater.inflate(R.layout.row_img, null);
+                view = layoutInflater.inflate(R.layout.row, null);
             }
 
             APInfo apInfo = apInfoList.get(position);
