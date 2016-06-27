@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
@@ -87,7 +88,7 @@ public class MainActivity extends Activity {
         TextView tv_title = (TextView) customActionView.findViewById(R.id.tv_title);
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         actionBar.setCustomView(customActionView);
-
+        actionBar.setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
 
@@ -133,42 +134,44 @@ public class MainActivity extends Activity {
             LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
             View layout = inflater.inflate(R.layout.info, null);
 
-            TextView ssid = (TextView) layout.findViewById(R.id.tv_ssid);
+           // TextView ssid = (TextView) layout.findViewById(R.id.tv_ssid);
             TextView mac = (TextView) layout.findViewById(R.id.tv_mac);
             TextView security = (TextView) layout.findViewById(R.id.tv_security);
             TextView info = (TextView) layout.findViewById(R.id.tv_info);
-            ssid.setText(curAP.getSSID());
-            mac.setText(curAP.getMAC());
+            // ssid.setText(curAP.getSSID());
+            mac.setText("      "+ curAP.getMAC());
 
             if (curAP.getSecureLevel() != null && curAP.getConnCount() > 0) {
                 if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
-                    security.setText("보안도가 높습니다. (" + curAP.getSecureScore() + "점)");
+                    security.setText("      안전한 WiFi입니다. (" + curAP.getSecureScore() + "점)");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    security.setText("보안도가 보통입니다. (" + curAP.getSecureScore() + "점)");
+                    security.setText("      해킹 위협이 존재하는 WiFi. (" + curAP.getSecureScore() + "점)\n      안전한 WiFi 사용을 권장합니다.");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
-                    security.setText("보안도가 낮습니다. (" + curAP.getSecureScore() + "점)");
+                    security.setText("      보안에 취약한 WiFi입니다. (" + curAP.getSecureScore() + "점) \n      안전한 WiFi 사용을 권장합니다.");
                 }
 
                 String secure_info = "";
 
                 if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
-                    secure_info += "공유기 암호화 설정 안됨\n";
+                    secure_info += "        - 공유기 암호화 설정 안됨\n";
                 } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP) || (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA) && !curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA2))) {
-                    secure_info += "공유기 암호화 설정 취약\n";
+                    secure_info += "        - 공유기 암호화 설정 취약\n";
                 }
 
-                if (curAP.getInfoDns() > 0) secure_info += "DNS 변조 의심 : (" + curAP.getInfoDns() + "건 탐지)\n";
-                if (curAP.getInfoArp()) secure_info += "ARP 테이블 변조 의심\n";
-                if (curAP.getInfoPort()) secure_info += "비정상 포트 오픈";
+                if (curAP.getInfoDns() > 0) secure_info += "        - DNS 변조 의심 : (" + curAP.getInfoDns() + "건 탐지)\n";
+                if (curAP.getInfoArp()) secure_info += "        - ARP 테이블 변조 의심\n";
+                if (curAP.getInfoPort()) secure_info += "        - 비정상 포트 오픈";
 
                 info.setText(secure_info);
             } else {
-                security.setText("보안도를 알 수 없습니다.");
+                security.setText("      보안정보를 알 수 없습니다.");
             }
 
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-            adBuilder.setCustomTitle(setFont(curAP.getSSID() + "의 정보"));
+            adBuilder.setCustomTitle( setFont(curAP.getSSID() + "의 정보"));
             adBuilder.setView(layout);
+
+
 
             adBuilder.setPositiveButton("연결", new DialogInterface.OnClickListener() {
                 @Override
@@ -257,6 +260,7 @@ public class MainActivity extends Activity {
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         tv_title.setTextColor(Color.parseColor("#ef3636"));
         tv_title.setTextSize(25);
+
 
         return tv_title;
     }
