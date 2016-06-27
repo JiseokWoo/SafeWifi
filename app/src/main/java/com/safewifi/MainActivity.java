@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
@@ -88,7 +89,7 @@ public class MainActivity extends Activity {
         TextView tv_title = (TextView) customActionView.findViewById(R.id.tv_title);
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         actionBar.setCustomView(customActionView);
-
+        actionBar.setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
 
@@ -373,13 +374,13 @@ public class MainActivity extends Activity {
                 // 신호 강도 정보 UI 표시
                 if (iv_signal != null && signal_level != null) {
                     if (signal_level > -50) {
-                        iv_signal.setImageResource(R.mipmap.signal_excellent);
+                        iv_signal.setImageResource(R.mipmap.signal_4);
                     } else if (signal_level > -70) {
-                        iv_signal.setImageResource(R.mipmap.signal_good);
+                        iv_signal.setImageResource(R.mipmap.signal_3);
                     } else if (signal_level > -90) {
-                        iv_signal.setImageResource(R.mipmap.signal_fair);
+                        iv_signal.setImageResource(R.mipmap.signal_2);
                     } else if (signal_level <= -90) {
-                        iv_signal.setImageResource(R.mipmap.signal_poor);
+                        iv_signal.setImageResource(R.mipmap.signal_1);
                     }
                 }
             }

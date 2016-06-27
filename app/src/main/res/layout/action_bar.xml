@@ -19,7 +19,7 @@
         android:layout_alignParentTop="true" />
 
     <TextView
-        android:paddingTop="15dp"
+        android:paddingTop="12dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
@@ -28,7 +28,7 @@
         android:height="50dp"
         android:textColor="#ef3636"
         android:textColorHighlight="#231818"
-        android:textSize="15dp"
+        android:textSize="18dp"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
