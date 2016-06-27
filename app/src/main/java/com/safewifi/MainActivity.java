@@ -371,11 +371,11 @@ public class MainActivity extends Activity {
                 if (iv_signal != null && signal_level != null) {
                     if (signal_level > -50) {
                         iv_signal.setImageResource(R.mipmap.signal_excellent);
-                    } else if (signal_level > -60) {
-                        iv_signal.setImageResource(R.mipmap.signal_good);
                     } else if (signal_level > -70) {
+                        iv_signal.setImageResource(R.mipmap.signal_good);
+                    } else if (signal_level > -90) {
                         iv_signal.setImageResource(R.mipmap.signal_fair);
-                    } else if (signal_level <= -70) {
+                    } else if (signal_level <= -90) {
                         iv_signal.setImageResource(R.mipmap.signal_poor);
                     }
                 }
