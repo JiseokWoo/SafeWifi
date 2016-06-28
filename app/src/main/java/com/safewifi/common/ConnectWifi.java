@@ -83,28 +83,6 @@ public class ConnectWifi {
         return config;
     }
 
-    public static boolean connect(WifiManager wifiManager, ScanResult ap) {
-        WifiConfiguration config = findStoredConfig(wifiManager, ap);
-
-        if (config != null) {
-            return connect(wifiManager, config);
-        }
-
-        if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
-            config = ConfigOpen(ap.SSID, ap.BSSID);
-        }
-
-        if (config != null) {
-            int networkID = wifiManager.addNetwork(config);
-
-            if (networkID != -1) {
-                return wifiManager.enableNetwork(networkID, true);
-            }
-        }
-
-        return false;
-    }
-
     public static boolean connect(WifiManager wifiManager, ScanResult ap, String password) {
         WifiConfiguration config = null;
 

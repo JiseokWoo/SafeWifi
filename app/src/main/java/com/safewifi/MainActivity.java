@@ -89,6 +89,7 @@ public class MainActivity extends Activity {
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         actionBar.setCustomView(customActionView);
         actionBar.setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
+
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
 
@@ -134,7 +135,6 @@ public class MainActivity extends Activity {
             LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
             View layout = inflater.inflate(R.layout.info, null);
 
-
             TextView security = (TextView) layout.findViewById(R.id.tv_security);
             TextView info = (TextView) layout.findViewById(R.id.tv_info);
 
@@ -161,18 +161,13 @@ public class MainActivity extends Activity {
 
                 info.setText(secure_info);
 
-            }
-
-
-            else {
+            } else {
                 security.setText("      보안정보를 알 수 없습니다.");
             }
 
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-            adBuilder.setCustomTitle( setFont(curAP.getSSID() + "의 정보"));
+            adBuilder.setCustomTitle(setFont(curAP.getSSID() + "의 정보"));
             adBuilder.setView(layout);
-
-
 
             adBuilder.setPositiveButton("연결", new DialogInterface.OnClickListener() {
                 @Override
@@ -329,6 +324,12 @@ public class MainActivity extends Activity {
      */
     private class APInfoAdapter extends ArrayAdapter<APInfo> {
 
+        private class ViewHolder {
+            ImageView iv_security;
+            TextView tv_ssid;
+            ImageView iv_signal;
+        }
+
         public APInfoAdapter(Context context, int textViewResourceId, List<APInfo> apInfoList) {
             super(context, textViewResourceId, apInfoList);
         }
@@ -349,9 +350,7 @@ public class MainActivity extends Activity {
                 viewHolder = (ViewHolder) view.getTag();
             }
 
-            new DrawView().execute(position, viewHolder);
-
-            /*APInfo apInfo = apInfoList.get(position);
+            APInfo apInfo = apInfoList.get(position);
             String secure_level = apInfo.getSecureLevel();
             Integer signal_level = apInfo.getSignalLevel();
 
@@ -370,84 +369,22 @@ public class MainActivity extends Activity {
             if (viewHolder.tv_ssid != null && apInfo.getSSID() != null) {
                 viewHolder.tv_ssid.setText(apInfo.getSSID());
             }
-            viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
+            // viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
 
             // 신호 강도 정보 UI 표시
             if (viewHolder.iv_signal != null && signal_level != null) {
                 if (signal_level > -50) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_excellent);
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_4);
                 } else if (signal_level > -70) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_good);
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_3);
                 } else if (signal_level > -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_fair);
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_2);
                 } else if (signal_level <= -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_poor);
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_1);
                 }
-            }*/
+            }
 
             return view;
-        }
-    }
-
-    private class ViewHolder {
-        ImageView iv_security;
-        TextView tv_ssid;
-        ImageView iv_signal;
-    }
-
-    private class DrawView extends AsyncTask<Object, Integer, ViewHolder> {
-        APInfo apInfo;
-        ViewHolder viewHolder;
-
-        @Override
-        protected ViewHolder doInBackground(Object... params) {
-            int position = (int) params[0];
-            viewHolder = (ViewHolder) params[1];
-            apInfo = apInfoList.get(position);
-
-            if (apInfo == null) {
-                cancel(true);
-            }
-
-            return viewHolder;
-        }
-
-        @Override
-        protected void onPostExecute(ViewHolder viewHolder) {
-
-            String secure_level = apInfo.getSecureLevel();
-            Integer signal_level = apInfo.getSignalLevel();
-
-            // 보안도 정보 UI 표시
-            if (viewHolder.iv_security != null && secure_level != null) {
-                if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h);
-                } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m);
-                } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l);
-                }
-            }
-
-            // SSID 표시
-            if (viewHolder.tv_ssid != null && apInfo.getSSID() != null) {
-                viewHolder.tv_ssid.setText(apInfo.getSSID());
-            }
-            viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
-
-            // 신호 강도 정보 UI 표시
-            if (viewHolder.iv_signal != null && signal_level != null) {
-                if (signal_level > -50) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_excellent);
-                } else if (signal_level > -70) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_good);
-                } else if (signal_level > -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_fair);
-                } else if (signal_level <= -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_poor);
-                }
-            }
-
         }
     }
 
