@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
     private ProgressDialog pbCheck;
     private ProgressDialog pbConnect;
 
-    private boolean isScanned;
+    private boolean isLoaded;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
         actionBar.setCustomView(customActionView);
         actionBar.setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
 
-        isScanned = false;
+        isLoaded = false;
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -145,38 +145,39 @@ public class MainActivity extends Activity {
 
             if (curAP.getSecureLevel() != null && curAP.getConnCount() > 0) {
                 if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
-                    security.setText("\t안전한 WiFi입니다. (" + curAP.getSecureScore() + "점)\n");
+                    security.setText("안전한 WiFi입니다. (" + curAP.getSecureScore() + "점)\n");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    security.setText("\t해킹 위협이 존재하는 WiFi. (" + curAP.getSecureScore() + "점)\n\t안전한 WiFi 사용을 권장합니다.\n");
+                    security.setText("해킹 위협이 존재하는 WiFi. (" + curAP.getSecureScore() + "점)\n안전한 WiFi 사용을 권장합니다.\n");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
-                    security.setText("\t보안에 취약한 WiFi입니다. (" + curAP.getSecureScore() + "점) \n\t안전한 WiFi 사용을 권장합니다.\n");
+                    security.setText("보안에 취약한 WiFi입니다. (" + curAP.getSecureScore() + "점) \n안전한 WiFi 사용을 권장합니다.\n");
                 }
+                security.setTypeface(null, Typeface.BOLD);
 
                 String secure_info = "";
 
                 if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
-                    secure_info += "\t- 공유기 암호화 설정 안됨";
+                    secure_info += "- 공유기 암호화 설정 안됨";
                 } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP) || (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA) && !curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA2))) {
-                    secure_info += "\t- 공유기 암호화 설정 취약";
+                    secure_info += "- 공유기 암호화 설정 취약";
                 }
 
                 if (curAP.getInfoDns() > 0) {
                     if (!secure_info.equals("")) secure_info += "\n";
-                    secure_info += "\t- DNS 변조 의심 : " + curAP.getInfoDns() + "건 탐지";
+                    secure_info += "- DNS 변조 의심 : " + curAP.getInfoDns() + "건 탐지";
                 }
                 if (curAP.getInfoArp()) {
                     if (!secure_info.equals("")) secure_info += "\n";
-                    secure_info += "\t- ARP 테이블 변조 의심";
+                    secure_info += "- ARP 테이블 변조 의심";
                 }
                 if (curAP.getInfoPort()) {
                     if (!secure_info.equals("")) secure_info += "\n";
-                    secure_info += "\t- 비정상 포트 오픈";
+                    secure_info += "- 비정상 포트 오픈";
                 }
 
                 info.setText(secure_info);
 
             } else {
-                security.setText("\t보안정보를 알 수 없습니다.");
+                security.setText("보안정보를 알 수 없습니다.");
             }
 
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
@@ -193,7 +194,7 @@ public class MainActivity extends Activity {
                             if (ConnectWifi.connect(wifiManager, ap, null)) {
                                 // TODO: AP 연결후 처리?
                             } else {
-                                errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
+                                errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.\n입력한 비밀번호가 짧습니다.", "확인");
                             }
                         } else {
 
@@ -232,6 +233,7 @@ public class MainActivity extends Activity {
 
                                 AlertDialog alertDialog = adBuilder.create();
                                 alertDialog.show();
+                                setDividerColor(alertDialog);
                             } else {
                                 ConnectWifi.connect(wifiManager, config);
                             }
@@ -245,24 +247,27 @@ public class MainActivity extends Activity {
             adBuilder.setNegativeButton("취소", null);
             AlertDialog alertDialog = adBuilder.create();
             alertDialog.show();
-
-            int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
-            View titleDivider = alertDialog.findViewById(titleDividerId);
-            if (titleDivider != null) {
-                titleDivider.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
-            }
+            setDividerColor(alertDialog);
         }
     };
 
+    private void setDividerColor(AlertDialog alertDialog) {
+        int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
+        View titleDivider = alertDialog.findViewById(titleDividerId);
+        if (titleDivider != null) {
+            titleDivider.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
+        }
+    }
+
     private void errorDialog(String title, String msg, String button) {
-        AlertDialog.Builder adBuilder = new AlertDialog.Builder(getApplicationContext());
+        AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
         adBuilder.setCustomTitle(setFont(title));
-        setTitle(title);
         adBuilder.setMessage(msg);
         adBuilder.setNeutralButton(button, null);
-        AlertDialog alertDialog = adBuilder.create();
 
+        AlertDialog alertDialog = adBuilder.create();
         alertDialog.show();
+        setDividerColor(alertDialog);
     }
 
     private TextView setFont(String content) {
@@ -271,7 +276,7 @@ public class MainActivity extends Activity {
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         tv_title.setTextColor(Color.parseColor("#ef3636"));
         tv_title.setTextSize(20);
-        tv_title.setPadding(40,40,40,40);
+        tv_title.setPadding(40, 40, 40, 40);
 
         return tv_title;
     }
@@ -287,6 +292,9 @@ public class MainActivity extends Activity {
                 SupplicantState state = intent.getParcelableExtra(WifiManager.EXTRA_NEW_STATE);
 
                 if(error == WifiManager.ERROR_AUTHENTICATING) {
+                    if (pbConnect != null && pbConnect.isShowing()) {
+                        pbConnect.dismiss();
+                    }
                     Toast.makeText(context, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
                     ScanResult ap = scanResultList.get(curAP.getPosition());
                     WifiConfiguration wifiConfiguration = ConnectWifi.findStoredConfig(wifiManager, ap);
@@ -300,15 +308,15 @@ public class MainActivity extends Activity {
                     case ASSOCIATED:
                         break;
                     case ASSOCIATING:
-                        if (isScanned && (pbConnect == null || !pbConnect.isShowing())) {
-                            pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다..");
+                        if (isLoaded && (pbConnect == null || !pbConnect.isShowing())) {
+                            pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
                         }
                         break;
                     case AUTHENTICATING:
                         //Toast.makeText(context, "인증을 진행하고 있습니다", Toast.LENGTH_SHORT).show();
                         break;
                     case COMPLETED:
-                        if (isScanned && (pbConnect != null && pbConnect.isShowing())) {
+                        if (isLoaded && (pbConnect != null && pbConnect.isShowing())) {
                             pbConnect.dismiss();
                             new CheckAP().execute(Command.AFTER_ACTION_NONE);
                         }
@@ -480,7 +488,7 @@ public class MainActivity extends Activity {
             Collections.sort(apInfoList, new LevelAscCompare());
             pbScan.dismiss();
             apInfoAdapter.notifyDataSetChanged();
-            isScanned = true;
+            isLoaded = true;
             super.onPostExecute(result);
         }
     }
@@ -518,7 +526,11 @@ public class MainActivity extends Activity {
                 apInfo.setInfoPort(true);
 
                 // 서버에 현재 AP 정보 업로드
-                putAPInfo(apInfo);
+                apInfo = putAPInfo(apInfo);
+
+                if (apInfo.getSecureLevel() != null && !apInfo.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
+                    errorDialog("위험성 존재", "현재 접속한 WiFi는 안전도가 낮습니다.", "확인");
+                }
             }
             return params[0];
         }
@@ -592,7 +604,7 @@ public class MainActivity extends Activity {
      * 서버로 AP 정보 업로드
      * @param apInfo
      */
-    private String putAPInfo(APInfo apInfo) {
+    private APInfo putAPInfo(APInfo apInfo) {
         String response = Command.EMPTY;
 
         try {
@@ -615,6 +627,17 @@ public class MainActivity extends Activity {
             if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 BufferedReader bf = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 response = bf.readLine();
+
+                // TODO: 에러 처리 로직 개선 필요
+                if (response.equals(Command.NO_MAC_ERROR)) {
+                    return null;
+                } else if (response.equals(Command.DB_INSERT_ERROR) || response.equals(Command.DB_SELECT_ERROR)) {
+                    return null;
+                } else if (response.equals(Command.EMPTY)) {
+                    return null;
+                } else {
+                    apInfo.setDBInfo(response);
+                }
             }
 
             conn.disconnect();
@@ -623,8 +646,10 @@ public class MainActivity extends Activity {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
-        return response;
+        return apInfo;
     }
 }
