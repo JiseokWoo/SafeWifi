@@ -78,7 +78,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
         // 어플 아이콘, 타이틀, 새로고침 버튼
@@ -329,66 +328,126 @@ public class MainActivity extends Activity {
      * APInfo 클래스와 리스트뷰를 연결해주는 Adapter
      */
     private class APInfoAdapter extends ArrayAdapter<APInfo> {
-        private List<APInfo> apInfoList;
 
         public APInfoAdapter(Context context, int textViewResourceId, List<APInfo> apInfoList) {
             super(context, textViewResourceId, apInfoList);
-            this.apInfoList = apInfoList;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view = convertView;
+        public View getView(int position, View view, ViewGroup parent) {
+            LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            ViewHolder viewHolder;
 
             if (view == null) {
-                LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 view = layoutInflater.inflate(R.layout.row, null);
+                viewHolder = new ViewHolder();
+                viewHolder.iv_security = (ImageView) view.findViewById(R.id.iv_security);
+                viewHolder.tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
+                viewHolder.iv_signal = (ImageView) view.findViewById(R.id.iv_signal);
+                view.setTag(viewHolder);
+            } else {
+                viewHolder = (ViewHolder) view.getTag();
             }
 
-            APInfo apInfo = apInfoList.get(position);
+            new DrawView().execute(position, viewHolder);
 
-            ImageView iv_secure = (ImageView) view.findViewById(R.id.iv_security);
+            /*APInfo apInfo = apInfoList.get(position);
+            String secure_level = apInfo.getSecureLevel();
+            Integer signal_level = apInfo.getSignalLevel();
 
-            if (apInfo != null) {
-                ImageView iv_security = (ImageView) view.findViewById(R.id.iv_security);
-                TextView tv_ssid = (TextView) view.findViewById(R.id.tv_ssid);
-                ImageView iv_signal = (ImageView) view.findViewById(R.id.iv_signal);
-
-                String secure_level = apInfo.getSecureLevel();
-                Integer signal_level = apInfo.getSignalLevel();
-
-                // 보안도 정보 UI 표시
-                if (iv_security != null && secure_level != null) {
-                    if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
-                        iv_security.setImageResource(R.mipmap.secure_level_h);
-                    } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
-                        iv_security.setImageResource(R.mipmap.secure_level_m);
-                    } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
-                        iv_security.setImageResource(R.mipmap.secure_level_l);
-                    }
-                }
-
-                // SSID 표시
-                if (tv_ssid != null && apInfo.getSSID() != null) {
-                    tv_ssid.setText(apInfo.getSSID());
-                }
-                tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
-
-                // 신호 강도 정보 UI 표시
-                if (iv_signal != null && signal_level != null) {
-                    if (signal_level > -50) {
-                        iv_signal.setImageResource(R.mipmap.signal_4);
-                    } else if (signal_level > -70) {
-                        iv_signal.setImageResource(R.mipmap.signal_3);
-                    } else if (signal_level > -90) {
-                        iv_signal.setImageResource(R.mipmap.signal_2);
-                    } else if (signal_level <= -90) {
-                        iv_signal.setImageResource(R.mipmap.signal_1);
-                    }
+            // 보안도 정보 UI 표시
+            if (viewHolder.iv_security != null && secure_level != null) {
+                if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h);
+                } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m);
+                } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l);
                 }
             }
+
+            // SSID 표시
+            if (viewHolder.tv_ssid != null && apInfo.getSSID() != null) {
+                viewHolder.tv_ssid.setText(apInfo.getSSID());
+            }
+            viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
+
+            // 신호 강도 정보 UI 표시
+            if (viewHolder.iv_signal != null && signal_level != null) {
+                if (signal_level > -50) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_excellent);
+                } else if (signal_level > -70) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_good);
+                } else if (signal_level > -90) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_fair);
+                } else if (signal_level <= -90) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_poor);
+                }
+            }*/
 
             return view;
+        }
+    }
+
+    private class ViewHolder {
+        ImageView iv_security;
+        TextView tv_ssid;
+        ImageView iv_signal;
+    }
+
+    private class DrawView extends AsyncTask<Object, Integer, ViewHolder> {
+        APInfo apInfo;
+        ViewHolder viewHolder;
+
+        @Override
+        protected ViewHolder doInBackground(Object... params) {
+            int position = (int) params[0];
+            viewHolder = (ViewHolder) params[1];
+            apInfo = apInfoList.get(position);
+
+            if (apInfo == null) {
+                cancel(true);
+            }
+
+            return viewHolder;
+        }
+
+        @Override
+        protected void onPostExecute(ViewHolder viewHolder) {
+
+            String secure_level = apInfo.getSecureLevel();
+            Integer signal_level = apInfo.getSignalLevel();
+
+            // 보안도 정보 UI 표시
+            if (viewHolder.iv_security != null && secure_level != null) {
+                if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h);
+                } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m);
+                } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l);
+                }
+            }
+
+            // SSID 표시
+            if (viewHolder.tv_ssid != null && apInfo.getSSID() != null) {
+                viewHolder.tv_ssid.setText(apInfo.getSSID());
+            }
+            viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
+
+            // 신호 강도 정보 UI 표시
+            if (viewHolder.iv_signal != null && signal_level != null) {
+                if (signal_level > -50) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_excellent);
+                } else if (signal_level > -70) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_good);
+                } else if (signal_level > -90) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_fair);
+                } else if (signal_level <= -90) {
+                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_poor);
+                }
+            }
+
         }
     }
 
@@ -413,6 +472,7 @@ public class MainActivity extends Activity {
             pbScan = ProgressDialog.show(MainActivity.this, "", "스캔중입니다. 잠시만 기다려주세요.");
 
             apInfoAdapter.clear();
+            apInfoList.clear();
 
             // 와이파이 비활성일 경우 활성화
             if (!wifiManager.isWifiEnabled()) {
@@ -432,6 +492,8 @@ public class MainActivity extends Activity {
                 if (scanResultList != null && !scanResultList.isEmpty()) {
                     for (ScanResult ap : scanResultList) {
                         if (ap.SSID.equals("")) continue;
+                        if (ap.level < -88) continue;
+
                         APInfo apInfo = null;
                         try {
                             apInfo = getAPInfo(ap.BSSID, ap.SSID, ap.level, ap.capabilities);
