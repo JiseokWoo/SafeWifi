@@ -403,14 +403,26 @@ public class MainActivity extends Activity {
 
             // 신호 강도 정보 UI 표시
             if (signal_level != null) {
-                if (signal_level > -50) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_4);
-                } else if (signal_level > -70) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_3);
-                } else if (signal_level > -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_2);
-                } else if (signal_level <= -90) {
-                    viewHolder.iv_signal.setImageResource(R.mipmap.signal_1);
+                if (apInfo.getInfoEncrypt() != null && !apInfo.getInfoEncrypt().equals(Command.ENCRYPT_OPEN)) {
+                    if (signal_level > -50) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_4_r);
+                    } else if (signal_level > -70) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_3_r);
+                    } else if (signal_level > -90) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_2_r);
+                    } else if (signal_level <= -90) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_1_r);
+                    }
+                } else {
+                    if (signal_level > -50) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_4);
+                    } else if (signal_level > -70) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_3);
+                    } else if (signal_level > -90) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_2);
+                    } else if (signal_level <= -90) {
+                        viewHolder.iv_signal.setImageResource(R.mipmap.signal_1);
+                    }
                 }
             }
 
