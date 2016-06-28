@@ -377,11 +377,11 @@ public class MainActivity extends Activity {
             // 보안도 정보 UI 표시
             if (secure_level != null) {
                 if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h2);
                 } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m2);
                 } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l2);
                 }
             } else {
                 viewHolder.iv_security.setImageResource(R.mipmap.secure_level_u);
