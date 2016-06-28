@@ -32,4 +32,7 @@ public class Command {
     public final static String ENCRYPT_WPA = "WPA";
     public final static String ENCRYPT_WPA2 = "WPA2";
 
+    // checkap
+    public final static String AFTER_ACTION_SCAN = "AFTER_ACTION_SCAN";
+    public final static String AFTER_ACTION_NONE = "AFTER_ACTION_NONE";
 }

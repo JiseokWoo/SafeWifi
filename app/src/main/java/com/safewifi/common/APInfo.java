@@ -88,7 +88,7 @@ public class APInfo {
      * DHCP Info에서 pubIP, DNS1, DNS2 읽어와 객체에 저장
      * @param dhcpInfo
      */
-    public void setDHCP(DhcpInfo dhcpInfo) {
+    public void setDHCPInfo(DhcpInfo dhcpInfo) {
 
         if (dhcpInfo.ipAddress != 0) setPubIP(Formatter.formatIpAddress(dhcpInfo.ipAddress));
         else setPubIP("-");

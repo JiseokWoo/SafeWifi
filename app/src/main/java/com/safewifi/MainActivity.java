@@ -59,8 +59,8 @@ import java.util.List;
  */
 public class MainActivity extends Activity {
 
-    private static final String get_url = "http://172.20.10.8/wifiscan.php";
-    private static final String put_url = "http://172.20.10.8/wificonn.php";
+    private static final String get_url = "http://61.72.159.241/wifiscan.php";
+    private static final String put_url = "http://61.72.159.241/wificonn.php";
 
     private APInfoAdapter apInfoAdapter;
     private WifiManager wifiManager;
@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         registerReceiver(wifiReceiver, intentFilter);
 
-        // ;새로고침 버튼 클릭, 스캔 다시 시작
+        // 새로고침 버튼 클릭, 스캔 다시 시작
         imageButton = (ImageButton) findViewById(R.id.scan_refresh);
         imageButton.setOnClickListener(new ImageButton.OnClickListener(){
             @Override
@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
 
         // 현재 AP 연결중일 경우
         if (wifiInfo.getBSSID() != null) {
-           new CheckAP().execute();    // 현재 AP 정보 수집후 서버에 전송
+           new CheckAP().execute(Command.AFTER_ACTION_SCAN);    // 현재 AP 정보 수집후 서버에 전송
         } else {
             new ScanAP().execute();
         }
@@ -284,21 +284,23 @@ public class MainActivity extends Activity {
 
                 switch(state) {
                     case ASSOCIATED:
+                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
                         break;
                     case ASSOCIATING:
+                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
                         break;
                     case AUTHENTICATING:
-                        Toast.makeText(context, "인증을 진행하고 있습니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "인증을 진행하고 있습니다", Toast.LENGTH_SHORT).show();
                         break;
                     case COMPLETED:
-                        //Toast.makeText(context, "연결되었습니다.", Toast.LENGTH_SHORT).show();
+                        //new CheckAP().execute(Command.AFTER_ACTION_NONE);
                         break;
                     case DISCONNECTED:
                         break;
                     case DORMANT:
                         break;
                     case FOUR_WAY_HANDSHAKE:
-                        Toast.makeText(context, "연결중입니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
                         break;
                     case GROUP_HANDSHAKE:
                         break;
@@ -488,7 +490,7 @@ public class MainActivity extends Activity {
                 }
 
                 APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt, apInfoList.size());
-                apInfo.setDHCP(dhcpInfo);
+                apInfo.setDHCPInfo(dhcpInfo);
                 apInfo.setInfoArp(ARPTable.checkARPSpoof());
 
                 // TODO: 테스트용
@@ -496,16 +498,16 @@ public class MainActivity extends Activity {
 
                 // 서버에 현재 AP 정보 업로드
                 putAPInfo(apInfo);
-
-                return Command.SUCCESS;
             }
-            return Command.FAIL;
+            return params[0];
         }
 
         @Override
         protected void onPostExecute(String result) {
             pbCheck.dismiss();
-            new ScanAP().execute();
+            if (result.equals(Command.AFTER_ACTION_SCAN)) {
+                new ScanAP().execute();
+            }
             super.onPostExecute(result);
         }
     }
