@@ -385,14 +385,14 @@ public class MainActivity extends Activity {
             // 보안도 정보 UI 표시
             if (secure_level != null) {
                 if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h2);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h3);
                 } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m2);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_m3);
                 } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
-                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l2);
+                    viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l3);
                 }
             } else {
-                viewHolder.iv_security.setImageResource(R.mipmap.secure_level_u);
+                viewHolder.iv_security.setImageResource(R.mipmap.secure_level_u2);
             }
 
             // SSID 표시
