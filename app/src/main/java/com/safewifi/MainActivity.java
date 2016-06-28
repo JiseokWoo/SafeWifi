@@ -74,6 +74,9 @@ public class MainActivity extends Activity {
 
     private ProgressDialog pbScan;
     private ProgressDialog pbCheck;
+    private ProgressDialog pbConnect;
+
+    private boolean isScanned;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +92,8 @@ public class MainActivity extends Activity {
         tv_title.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
         actionBar.setCustomView(customActionView);
         actionBar.setIcon(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
+
+        isScanned = false;
 
         // APInfo 객체가 저장될 리스트
         apInfoList = new ArrayList<>();
@@ -120,7 +125,7 @@ public class MainActivity extends Activity {
 
         // 현재 AP 연결중일 경우
         if (wifiInfo.getBSSID() != null) {
-           new CheckAP().execute(Command.AFTER_ACTION_SCAN);    // 현재 AP 정보 수집후 서버에 전송
+            new CheckAP().execute(Command.AFTER_ACTION_SCAN);    // 현재 AP 정보 수집후 서버에 전송
         } else {
             new ScanAP().execute();
         }
@@ -140,29 +145,38 @@ public class MainActivity extends Activity {
 
             if (curAP.getSecureLevel() != null && curAP.getConnCount() > 0) {
                 if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_HIGH)) {
-                    security.setText("      안전한 WiFi입니다. (" + curAP.getSecureScore() + "점)\n");
+                    security.setText("\t안전한 WiFi입니다. (" + curAP.getSecureScore() + "점)\n");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_MEDIUM)) {
-                    security.setText("      해킹 위협이 존재하는 WiFi. (" + curAP.getSecureScore() + "점)\n      안전한 WiFi 사용을 권장합니다.\n");
+                    security.setText("\t해킹 위협이 존재하는 WiFi. (" + curAP.getSecureScore() + "점)\n\t안전한 WiFi 사용을 권장합니다.\n");
                 } else if (curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
-                    security.setText("      보안에 취약한 WiFi입니다. (" + curAP.getSecureScore() + "점) \n      안전한 WiFi 사용을 권장합니다.\n");
+                    security.setText("\t보안에 취약한 WiFi입니다. (" + curAP.getSecureScore() + "점) \n\t안전한 WiFi 사용을 권장합니다.\n");
                 }
 
                 String secure_info = "";
 
                 if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
-                    secure_info += "        - 공유기 암호화 설정 안됨";
+                    secure_info += "\t- 공유기 암호화 설정 안됨";
                 } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP) || (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA) && !curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA2))) {
-                    secure_info += "        - 공유기 암호화 설정 취약";
+                    secure_info += "\t- 공유기 암호화 설정 취약";
                 }
 
-                if (curAP.getInfoDns() > 0) secure_info += "        - DNS 변조 의심 : (" + curAP.getInfoDns() + "건 탐지)";
-                if (curAP.getInfoArp()) secure_info += "        - ARP 테이블 변조 의심";
-                if (curAP.getInfoPort()) secure_info += "        - 비정상 포트 오픈";
+                if (curAP.getInfoDns() > 0) {
+                    if (!secure_info.equals("")) secure_info += "\n";
+                    secure_info += "\t- DNS 변조 의심 : " + curAP.getInfoDns() + "건 탐지";
+                }
+                if (curAP.getInfoArp()) {
+                    if (!secure_info.equals("")) secure_info += "\n";
+                    secure_info += "\t- ARP 테이블 변조 의심";
+                }
+                if (curAP.getInfoPort()) {
+                    if (!secure_info.equals("")) secure_info += "\n";
+                    secure_info += "\t- 비정상 포트 오픈";
+                }
 
                 info.setText(secure_info);
 
             } else {
-                security.setText("      보안정보를 알 수 없습니다.");
+                security.setText("\t보안정보를 알 수 없습니다.");
             }
 
             AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
@@ -206,7 +220,6 @@ public class MainActivity extends Activity {
                                         } else {
                                             errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
                                         }
-
                                     }
                                 });
 
@@ -232,10 +245,12 @@ public class MainActivity extends Activity {
             adBuilder.setNegativeButton("취소", null);
             AlertDialog alertDialog = adBuilder.create();
             alertDialog.show();
+
             int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
             View titleDivider = alertDialog.findViewById(titleDividerId);
-            if (titleDivider != null)
+            if (titleDivider != null) {
                 titleDivider.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
+            }
         }
     };
 
@@ -257,7 +272,6 @@ public class MainActivity extends Activity {
         tv_title.setTextColor(Color.parseColor("#ef3636"));
         tv_title.setTextSize(20);
         tv_title.setPadding(40,40,40,40);
-
 
         return tv_title;
     }
@@ -284,23 +298,27 @@ public class MainActivity extends Activity {
 
                 switch(state) {
                     case ASSOCIATED:
-                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
                         break;
                     case ASSOCIATING:
-                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
+                        if (isScanned && (pbConnect == null || !pbConnect.isShowing())) {
+                            pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다..");
+                        }
                         break;
                     case AUTHENTICATING:
-                        Toast.makeText(context, "인증을 진행하고 있습니다", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context, "인증을 진행하고 있습니다", Toast.LENGTH_SHORT).show();
                         break;
                     case COMPLETED:
-                        //new CheckAP().execute(Command.AFTER_ACTION_NONE);
+                        if (isScanned && (pbConnect != null && pbConnect.isShowing())) {
+                            pbConnect.dismiss();
+                            new CheckAP().execute(Command.AFTER_ACTION_NONE);
+                        }
                         break;
                     case DISCONNECTED:
                         break;
                     case DORMANT:
                         break;
                     case FOUR_WAY_HANDSHAKE:
-                        Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context, "연결중입니다", Toast.LENGTH_SHORT).show();
                         break;
                     case GROUP_HANDSHAKE:
                         break;
@@ -357,7 +375,7 @@ public class MainActivity extends Activity {
             Integer signal_level = apInfo.getSignalLevel();
 
             // 보안도 정보 UI 표시
-            if (viewHolder.iv_security != null && secure_level != null) {
+            if (secure_level != null) {
                 if (secure_level.equals(Command.SECURE_LEVEL_HIGH)) {
                     viewHolder.iv_security.setImageResource(R.mipmap.secure_level_h);
                 } else if (secure_level.equals(Command.SECURE_LEVEL_MEDIUM)) {
@@ -365,16 +383,18 @@ public class MainActivity extends Activity {
                 } else if (secure_level.equals(Command.SECURE_LEVEL_LOW)) {
                     viewHolder.iv_security.setImageResource(R.mipmap.secure_level_l);
                 }
+            } else {
+                viewHolder.iv_security.setImageResource(R.mipmap.secure_level_u);
             }
 
             // SSID 표시
-            if (viewHolder.tv_ssid != null && apInfo.getSSID() != null) {
+            if (apInfo.getSSID() != null) {
                 viewHolder.tv_ssid.setText(apInfo.getSSID());
             }
             // viewHolder.tv_ssid.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansFallback.ttf"));
 
             // 신호 강도 정보 UI 표시
-            if (viewHolder.iv_signal != null && signal_level != null) {
+            if (signal_level != null) {
                 if (signal_level > -50) {
                     viewHolder.iv_signal.setImageResource(R.mipmap.signal_4);
                 } else if (signal_level > -70) {
@@ -408,7 +428,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected  void onPreExecute() {
-            pbScan = ProgressDialog.show(MainActivity.this, "", "스캔중입니다. 잠시만 기다려주세요.");
+            pbScan = ProgressDialog.show(MainActivity.this, "", "스캔중입니다.\n잠시만 기다려주세요.");
 
             apInfoAdapter.clear();
             apInfoList.clear();
@@ -431,7 +451,7 @@ public class MainActivity extends Activity {
                 if (scanResultList != null && !scanResultList.isEmpty()) {
                     for (ScanResult ap : scanResultList) {
                         if (ap.SSID.equals("")) continue;
-                        if (ap.level < -88) continue;
+                        if (ap.level < -80) continue;
 
                         APInfo apInfo = null;
                         try {
@@ -460,6 +480,7 @@ public class MainActivity extends Activity {
             Collections.sort(apInfoList, new LevelAscCompare());
             pbScan.dismiss();
             apInfoAdapter.notifyDataSetChanged();
+            isScanned = true;
             super.onPostExecute(result);
         }
     }
@@ -471,7 +492,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
-            pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다. 잠시만 기다려주세요.");
+            pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
             wifiManager.startScan();
             scanResultList = wifiManager.getScanResults();
         }
@@ -606,5 +627,4 @@ public class MainActivity extends Activity {
 
         return response;
     }
-
 }
