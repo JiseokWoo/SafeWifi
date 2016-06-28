@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/tv_info"
         android:layout_gravity="center_horizontal"
-        android:paddingLeft="50dp" />
+        android:paddingLeft="35dp" />
 
 </LinearLayout>
 
