@@ -21,6 +21,9 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +49,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -184,59 +188,46 @@ public class MainActivity extends Activity {
             adBuilder.setCustomTitle(setFont(curAP.getSSID() + "의 정보"));
             adBuilder.setView(layout);
 
-            adBuilder.setPositiveButton("연결", new DialogInterface.OnClickListener() {
+            String button = "연결";
+            if (curAP.getSecureLevel() == null) {
+                button = "정보확인";
+            }
+
+            adBuilder.setPositiveButton(button, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     if (scanResultList != null) {
-                        final ScanResult ap = scanResultList.get(curAP.getPosition());
-
-                        if (ap.capabilities.contains(Command.ENCRYPT_OPEN)) {
-                            if (ConnectWifi.connect(wifiManager, ap, null)) {
-                                // TODO: AP 연결후 처리?
-                            } else {
-                                errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.\n입력한 비밀번호가 짧습니다.", "확인");
-                            }
+                        if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
+                            show();
                         } else {
 
-                            WifiConfiguration config = ConnectWifi.findStoredConfig(wifiManager, ap);
+                            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+                            View layout = inflater.inflate(R.layout.connect, null);
+                            final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
+                            et_password.setPrivateImeOptions("defaultInputmode=english;");
 
-                            if (config == null) {
-                                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                                View layout = inflater.inflate(R.layout.connect, null);
-                                final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
-                                et_password.setPrivateImeOptions("defaultInputmode=english;");
+                            AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+                            adBuilder.setCustomTitle(setFont(curAP.getSSID() + "에 연결"));
+                            adBuilder.setView(layout);
 
-                                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                                adBuilder.setCustomTitle(setFont(curAP.getSSID() + "에 연결"));
-                                adBuilder.setView(layout);
+                            adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    show();
+                                }
+                            });
 
-                                adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
+                            adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
 
-                                        String password = et_password.getText().toString();
+                            AlertDialog alertDialog = adBuilder.create();
+                            alertDialog.show();
+                            setDividerColor(alertDialog);
 
-                                        if (ConnectWifi.connect(wifiManager, ap, password)) {
-                                            // TODO: AP 연결후 처리?
-                                        } else {
-                                            errorDialog("연결 실패", ap.SSID + "에 연결하지 못했습니다.", "확인");
-                                        }
-                                    }
-                                });
-
-                                adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
-
-                                AlertDialog alertDialog = adBuilder.create();
-                                alertDialog.show();
-                                setDividerColor(alertDialog);
-                            } else {
-                                ConnectWifi.connect(wifiManager, config);
-                            }
                         }
                     } else {
                         errorDialog("AP 정보 확인 에러", "AP 정보를 확인할 수 없습니다.\n새로고침 후 다시 시도해주세요.", "확인");
@@ -249,7 +240,71 @@ public class MainActivity extends Activity {
             alertDialog.show();
             setDividerColor(alertDialog);
         }
+
     };
+
+    public static int TIME_OUT = 1001;
+
+    private class TestCheck extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected void onPreExecute() {
+            pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            curAP.setPubIP("1.1.1.1");
+            curAP.setDnsIP1("1.1.1.1");
+            curAP.setDnsIP2("-");
+            curAP.setInfoArp(false);
+
+            // 서버에 현재 AP 정보 업로드
+            curAP = putAPInfo(curAP);
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            pbCheck.dismiss();
+            new ScanAP().execute();
+            super.onPostExecute(result);
+        }
+    }
+
+    Handler pbConnectHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == TIME_OUT) {
+                pbConnect.dismiss();
+                Toast.makeText(MainActivity.this, curAP.getSSID() + "에 연결되었습니다.", Toast.LENGTH_SHORT).show();
+                SystemClock.sleep(1000);
+                if (curAP.getSecureLevel() == null) {
+                    new TestCheck().execute();
+                } else {
+                    pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
+                    pbCheckHandler.sendEmptyMessageDelayed(TIME_OUT, 3000);
+                }
+            }
+        }
+    };
+
+    Handler pbCheckHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == TIME_OUT) {
+                pbCheck.dismiss();
+                if (curAP.getSecureLevel() != null && curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
+                    errorDialog("위험성 존재", "현재 접속한 WiFi는 안전도가 낮습니다.", "확인");
+                }
+            }
+        }
+    };
+
+    private void show() {
+        pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
+        pbConnectHandler.sendEmptyMessageDelayed(TIME_OUT, 2000);
+    }
 
     private void setDividerColor(AlertDialog alertDialog) {
         int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
@@ -533,9 +588,6 @@ public class MainActivity extends Activity {
                 APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt, apInfoList.size());
                 apInfo.setDHCPInfo(dhcpInfo);
                 apInfo.setInfoArp(ARPTable.checkARPSpoof());
-
-                // TODO: 테스트용
-                apInfo.setInfoPort(true);
 
                 // 서버에 현재 AP 정보 업로드
                 apInfo = putAPInfo(apInfo);
