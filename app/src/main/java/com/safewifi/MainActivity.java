@@ -21,9 +21,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,7 +46,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -136,6 +132,7 @@ public class MainActivity extends Activity {
 
     }
 
+
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -196,38 +193,71 @@ public class MainActivity extends Activity {
             adBuilder.setPositiveButton(button, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    if (scanResultList != null) {
+                    if (curAP != null) {
+
+                        if (pbConnect == null || !pbConnect.isShowing()) {
+                            pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
+                        }
+
                         if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
-                            show();
+                            if (ConnectWifi.connect(wifiManager, curAP, null)) {
+                                // TODO: AP 연결후 처리?
+                            } else {
+                                if (pbConnect != null && pbConnect.isShowing()) {
+                                    pbConnect.dismiss();
+                                }
+                                errorDialog("연결 실패", curAP.getSSID() + "에 연결하지 못했습니다.\n입력한 비밀번호가 짧습니다.", "확인");
+                            }
                         } else {
 
-                            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                            View layout = inflater.inflate(R.layout.connect, null);
-                            final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
-                            et_password.setPrivateImeOptions("defaultInputmode=english;");
+                            WifiConfiguration config = ConnectWifi.findStoredConfig(wifiManager, curAP.getSSID());
 
-                            AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
-                            adBuilder.setCustomTitle(setFont(curAP.getSSID() + "에 연결"));
-                            adBuilder.setView(layout);
+                            if (config == null) {
+                                LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+                                View layout = inflater.inflate(R.layout.connect, null);
+                                final EditText et_password = (EditText) layout.findViewById(R.id.et_password);
+                                et_password.setPrivateImeOptions("defaultInputmode=english;");
 
-                            adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    show();
+                                AlertDialog.Builder adBuilder = new AlertDialog.Builder(MainActivity.this);
+                                adBuilder.setCustomTitle(setFont(curAP.getSSID() + "에 연결"));
+                                adBuilder.setView(layout);
+
+                                adBuilder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                        String password = et_password.getText().toString();
+
+                                        if (ConnectWifi.connect(wifiManager, curAP, password)) {
+
+                                        } else {
+                                            if (pbConnect != null && pbConnect.isShowing()) {
+                                                pbConnect.dismiss();
+                                            }
+                                            errorDialog("연결 실패", curAP.getSSID() + "에 연결하지 못했습니다.", "확인");
+                                        }
+                                    }
+                                });
+
+                                adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+
+                                AlertDialog alertDialog = adBuilder.create();
+                                alertDialog.show();
+                                setDividerColor(alertDialog);
+                            } else {
+                                if (ConnectWifi.connect(wifiManager, config)) {
+                                } else {
+                                    if (pbConnect != null && pbConnect.isShowing()) {
+                                        pbConnect.dismiss();
+                                    }
+                                    // TODO: 에러처리
                                 }
-                            });
-
-                            adBuilder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-
-                            AlertDialog alertDialog = adBuilder.create();
-                            alertDialog.show();
-                            setDividerColor(alertDialog);
-
+                            }
                         }
                     } else {
                         errorDialog("AP 정보 확인 에러", "AP 정보를 확인할 수 없습니다.\n새로고침 후 다시 시도해주세요.", "확인");
@@ -240,71 +270,7 @@ public class MainActivity extends Activity {
             alertDialog.show();
             setDividerColor(alertDialog);
         }
-
     };
-
-    public static int TIME_OUT = 1001;
-
-    private class TestCheck extends AsyncTask<String, Integer, String> {
-
-        @Override
-        protected void onPreExecute() {
-            pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-
-            curAP.setPubIP("1.1.1.1");
-            curAP.setDnsIP1("1.1.1.1");
-            curAP.setDnsIP2("-");
-            curAP.setInfoArp(false);
-
-            // 서버에 현재 AP 정보 업로드
-            curAP = putAPInfo(curAP);
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            pbCheck.dismiss();
-            new ScanAP().execute();
-            super.onPostExecute(result);
-        }
-    }
-
-    Handler pbConnectHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            if (msg.what == TIME_OUT) {
-                pbConnect.dismiss();
-                Toast.makeText(MainActivity.this, curAP.getSSID() + "에 연결되었습니다.", Toast.LENGTH_SHORT).show();
-                SystemClock.sleep(1000);
-                if (curAP.getSecureLevel() == null) {
-                    new TestCheck().execute();
-                } else {
-                    pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
-                    pbCheckHandler.sendEmptyMessageDelayed(TIME_OUT, 3000);
-                }
-            }
-        }
-    };
-
-    Handler pbCheckHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            if (msg.what == TIME_OUT) {
-                pbCheck.dismiss();
-                if (curAP.getSecureLevel() != null && curAP.getSecureLevel().equals(Command.SECURE_LEVEL_LOW)) {
-                    errorDialog("위험성 존재", "현재 접속한 WiFi는 안전도가 낮습니다.", "확인");
-                }
-            }
-        }
-    };
-
-    private void show() {
-        pbConnect = ProgressDialog.show(MainActivity.this, "", "연결중입니다.");
-        pbConnectHandler.sendEmptyMessageDelayed(TIME_OUT, 2000);
-    }
 
     private void setDividerColor(AlertDialog alertDialog) {
         int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
@@ -351,8 +317,7 @@ public class MainActivity extends Activity {
                         pbConnect.dismiss();
                     }
                     Toast.makeText(context, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
-                    ScanResult ap = scanResultList.get(curAP.getPosition());
-                    WifiConfiguration wifiConfiguration = ConnectWifi.findStoredConfig(wifiManager, ap);
+                    WifiConfiguration wifiConfiguration = ConnectWifi.findStoredConfig(wifiManager, curAP.getSSID());
 
                     if (wifiConfiguration != null) {
                         wifiManager.removeNetwork(wifiConfiguration.networkId);
@@ -373,7 +338,7 @@ public class MainActivity extends Activity {
                     case COMPLETED:
                         if (isLoaded && (pbConnect != null && pbConnect.isShowing())) {
                             pbConnect.dismiss();
-                            new CheckAP().execute(Command.AFTER_ACTION_NONE);
+                            new CheckAP().execute(Command.AFTER_ACTION_SCAN);
                         }
                         break;
                     case DISCONNECTED:
@@ -458,7 +423,7 @@ public class MainActivity extends Activity {
 
             // 신호 강도 정보 UI 표시
             if (signal_level != null) {
-                if (apInfo.getInfoEncrypt() != null && !apInfo.getInfoEncrypt().equals(Command.ENCRYPT_OPEN)) {
+                if (apInfo.getInfoEncrypt() != null && !apInfo.getInfoEncrypt().contains(Command.ENCRYPT_OPEN)) {
                     if (signal_level > -50) {
                         viewHolder.iv_signal.setImageResource(R.mipmap.signal_4_r);
                     } else if (signal_level > -70) {
@@ -575,6 +540,7 @@ public class MainActivity extends Activity {
             pbCheck = ProgressDialog.show(MainActivity.this, "", "정보 업로드중입니다.\n잠시만 기다려주세요.");
             wifiManager.startScan();
             scanResultList = wifiManager.getScanResults();
+            wifiInfo = wifiManager.getConnectionInfo();
         }
 
         @Override
@@ -590,7 +556,7 @@ public class MainActivity extends Activity {
                     }
                 }
 
-                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt, apInfoList.size());
+                APInfo apInfo = new APInfo(wifiInfo.getBSSID(), wifiInfo.getSSID(), wifiInfo.getRssi(), encrypt);
                 apInfo.setDHCPInfo(dhcpInfo);
                 apInfo.setInfoArp(ARPTable.checkARPSpoof());
 
@@ -622,7 +588,7 @@ public class MainActivity extends Activity {
      * @throws JSONException
      */
     private APInfo getAPInfo(String mac, String ssid, Integer signal, String encrypt) throws JSONException {
-        APInfo apInfo = new APInfo(mac, ssid, signal, encrypt, apInfoList.size());
+        APInfo apInfo = new APInfo(mac, ssid, signal, encrypt);
 
         try {
             // wifiscan connection 생성

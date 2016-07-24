@@ -37,14 +37,13 @@ public class APInfo {
     private int conn_count;
     private final static String keyConnCount = "conn_count";
     private Integer signalLevel;
-    private Integer position;
 
     /**
      * MAC 주소와 SSID 값만 설정하는 생성자
      * @param mac
      * @param ssid
      */
-    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt, Integer position) {
+    public APInfo(String mac, String ssid, Integer signalLevel, String encrypt) {
         setMAC(mac);
         setSSID(ssid);
         setPubIP("-");
@@ -52,7 +51,6 @@ public class APInfo {
         setDnsIP2("-");
         setSignalLevel(signalLevel);
         setInfoEncrypt(encrypt);
-        setPosition(position);
     }
 
     /**
@@ -202,14 +200,6 @@ public class APInfo {
 
     public void setSignalLevel(Integer signalLevel) {
         this.signalLevel = signalLevel;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
     }
 
     /**

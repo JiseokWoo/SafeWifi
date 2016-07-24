@@ -1,5 +1,6 @@
 package com.safewifi.common;
 
+import android.app.ProgressDialog;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -69,12 +70,12 @@ public class ConnectWifi {
         return config;
     }
 
-    public static WifiConfiguration findStoredConfig(WifiManager wifiManager, ScanResult ap) {
+    public static WifiConfiguration findStoredConfig(WifiManager wifiManager, String ssid) {
         WifiConfiguration config = null;
         List<WifiConfiguration> wifiConfigurationList = wifiManager.getConfiguredNetworks();
 
         for (WifiConfiguration configuration : wifiConfigurationList) {
-            if (configuration.SSID.equals("\"" + ap.SSID + "\"")) {
+            if (configuration.SSID.equals("\"" + ssid + "\"")) {
                 config = configuration;
                 break;
             }
@@ -83,13 +84,13 @@ public class ConnectWifi {
         return config;
     }
 
-    public static boolean connect(WifiManager wifiManager, ScanResult ap, String password) {
+    public static boolean connect(WifiManager wifiManager, APInfo curAP, String password) {
         WifiConfiguration config = null;
 
-        if (ap.capabilities.contains(Command.ENCRYPT_WEP)) {
-            config = ConfigWEP(ap.SSID, ap.BSSID, password);
-        } else if (ap.capabilities.contains(Command.ENCRYPT_WPA)) {
-            config = ConfigWPA(ap.SSID, ap.BSSID, password);
+        if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WEP)) {
+            config = ConfigWEP(curAP.getSSID(), curAP.getMAC(), password);
+        } else if (curAP.getInfoEncrypt().contains(Command.ENCRYPT_WPA)) {
+            config = ConfigWPA(curAP.getSSID(), curAP.getMAC(), password);
         }
 
         if (config != null) {
