@@ -1,7 +1,5 @@
-package com.safewifi.common;
+package com.wifine.common;
 
-import android.app.ProgressDialog;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 

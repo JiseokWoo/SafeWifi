@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.wifine;
 
 
 import android.app.ActionBar;
@@ -33,10 +33,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.safewifi.common.APInfo;
-import com.safewifi.common.ARPTable;
-import com.safewifi.common.Command;
-import com.safewifi.common.ConnectWifi;
+import com.wifine.common.APInfo;
+import com.wifine.common.ARPTable;
+import com.wifine.common.Command;
+import com.wifine.common.ConnectWifi;
 
 import org.json.JSONException;
 

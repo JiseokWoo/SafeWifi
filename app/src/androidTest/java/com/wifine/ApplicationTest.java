@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.wifine;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

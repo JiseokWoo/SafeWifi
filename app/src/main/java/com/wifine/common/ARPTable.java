@@ -1,7 +1,4 @@
-package com.safewifi.common;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+package com.wifine.common;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package com.safewifi.common;
+package com.wifine.common;
 
 import android.net.DhcpInfo;
 import android.text.format.Formatter;

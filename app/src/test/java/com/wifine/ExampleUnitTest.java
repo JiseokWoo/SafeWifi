@@ -1,4 +1,4 @@
-package com.safewifi;
+package com.wifine;
 
 import org.junit.Test;
 
