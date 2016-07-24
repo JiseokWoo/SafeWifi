@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/SafeWifi.iml" filepath="$PROJECT_DIR$/SafeWifi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WiFine.iml" filepath="$PROJECT_DIR$/WiFine.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
